@@ -72,27 +72,26 @@ SpartanLabsGaming/MyGameClient (this repo)     the GameTools RTS client, JVM 23
 
 ```
 game client ──> ui-core ──api──> graphics-core ──> assets-core
+     │                                   └──api──> GeneralTools 3.x (multiplatform)
      │────────> graphics-desktop ──> graphics-core
      │────────> audio-desktop ──> audio-core ──> assets-core
      └────────> gametools ──> GeneralTools, WebTools
 ```
 
-- **Library dependencies:** neither library depends on GameTools, GeneralTools or WebTools.
+- **Library dependencies:** neither library depends on GameTools or WebTools. `graphics-core` depends on multiplatform GeneralTools for its basic types, so GameTools and the libraries must share one GeneralTools major in the game client. *(Changed 2026-10-20: the libraries previously avoided GeneralTools.)*
 - **UI on graphics:** UI's basic elements are built on graphics shapes, and its built-in elements are built from the basic ones.
 - **Where GameTools appears:** the game client is the only place where GameTools types meet library types.
 
 ### graphics-core (KMP)
 
-- **Basic types:** `Color`, `Point`, `Size` and `Rect`, as contract interfaces with a default immutable implementation each.
-  - GeneralTools and GameTools are JVM-only, so the libraries can't use their types; the game client adapts them instead.
-  - Once GeneralTools is multiplatform ([#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7)) and GameTools adopts it, those types can be used directly.
+- **Basic types:** colour, point, size and rectangle come from multiplatform GeneralTools ([#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7)) and are used directly. There are no interim types: G2 waits for #7. *(Changed 2026-10-20; the plan previously defined its own contract interfaces until #7 shipped.)*
 - **Camera:**
   - Holds position, zoom and viewport size.
   - Converts between world and screen coordinates.
   - Reports the visible world region. The library renders only what the camera can see.
   - Exposes movement operations: pan by an amount, zoom, centre on a world point.
   - Ports today's `Camera` / `NdcConverter` and fixes their wrong `networking` package.
-- **Shapes:** what every platform renderer has to draw. They sit in two layers:
+- **Shapes:** what the library draws. graphics-core turns them into batches that each platform's backend executes *(frame-level contract, 2026-10-19; see #1's scope-change comment)*. They sit in two layers:
   - The **world layer** is drawn through the camera.
   - The **screen layer** uses window pixels and holds the UI.
 
@@ -110,7 +109,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
   - UI-specific input (hit-testing, hover, triggers, shortcuts) is layered on top of this in ui-core.
 - **Platform contracts:**
   - `Surface` (size, resize, close request). Each platform creates its own window or surface.
-  - `Renderer` (draw one frame of shapes and their outlines).
+  - `RenderBackend`: executes a `RenderFrame`, the ordered batches graphics-core builds from a frame's shapes and outlines. It creates textures from decoded pixels and pipelines from descriptors, and reports its capabilities and device loss. *(Replaces the shape-level `Renderer`, 2026-10-19; see #1's scope-change comment.)*
   - Textures.
   - Text measurement.
   - Frame scheduling and clock. Each platform decides when frames happen and calls the game once per frame. The game's own fixed-timestep loop (or GameTools') runs inside that call.
@@ -120,7 +119,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
 ### graphics-desktop (JVM, LWJGL)
 
 - **Window:** the GLFW window and GL context, taken from `Window.initWindow` / `initOpenGl`.
-- **Renderer:** one OpenGL 3.3 renderer for every shape and outline. It merges today's two pipelines (the actor drawing in `Window` and the quad and text drawing in `UiRenderer`).
+- **Renderer:** one batched OpenGL 3.3 `RenderBackend` that executes every frame graphics-core builds *(frame-level contract, 2026-10-19)*. It merges today's two pipelines (the actor drawing in `Window` and the quad and text drawing in `UiRenderer`).
 - **Textures and text:** `TextureCache` and `Shaders` move here as-is. v1 text ports the STBEasyFont bitmap font; real fonts come later.
 - **Assets:** an `AssetSource` that loads from the classpath.
 - **Frames and input:** a desktop frame loop on `glfwGetTime`, and GLFW input translated into the abstract input.
@@ -183,7 +182,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
 - **Networking:** GameTools is growing its own networking, so the client half of the protocol belongs there ([MyGameTools#132](https://github.com/SpartanLabsGaming/MyGameTools/issues/132)). Until it ships, `NetworkClient` / `ProtocolParsing` / `ClientCommands` stay here.
 - **Snapshot adapter:**
   - Converts `DrawableSnapshot` into graphics shapes, using today's `drawableCore()`.
-  - Includes adapters from GeneralTools types to the library's basic types. They live here, not in any library, and go away when GeneralTools#7 lands.
+  - Needs no adapters for GeneralTools types, because the libraries use them directly. GameTools must first be on the same GeneralTools major, a move GeneralTools#7 already expects. *(Changed 2026-10-20.)*
   - Opts the selected unit's shape in to the default outline.
 - **Uses the library:** edge panning is built on graphics' camera and input. Click markers are ordinary world-layer rectangles. `M` / `A` / `S` are plain actions in the game scene's key table.
 
@@ -273,7 +272,7 @@ LWJGL covers all three OSes (x64 and arm64, including Apple Silicon). The Kotlin
 - **macOS, main thread:** GLFW must run on the first thread (`-XstartOnFirstThread`). The app's launcher already handles this.
 - **macOS, OpenGL:** Apple has deprecated OpenGL and frozen it at 4.1. Our 3.3 core works today, but a future macOS could need a Metal (or MoltenVK) backend.
 - **Linux, Wayland:** apps can't position their own windows there, so the current trick of moving a borderless window onto the primary monitor becomes GLFW's windowed full-screen mode.
-- **Testing:** CI compiles on all three, but no CI runner can open a window. Releases are run by hand on Windows only; macOS and Linux are "should work, untested."
+- **Testing:** CI compiles on all three. No CI runner has a GPU, but Linux runners can test the shared GL renderer on a software rasteriser (llvmpipe under Xvfb); the Linux desktop backend itself (windowing, input, packaging) stays untested. Releases are run by hand on Windows only; macOS and Linux are "should work, untested." *(Corrected 2026-10-19; see the roadmap, `docs/roadmap/vision-and-roadmap.md` §2.6.)*
 
 ## Code mapping
 
@@ -318,10 +317,10 @@ Each repo:
 - **KMP targets:** library modules start with `jvm()` plus one non-JVM target, with no web backend yet. The extra target makes any JVM-only API in common code fail to compile. G1 picks `js` or `wasmJs`, whichever every chosen dependency supports. Android is added in the Android phase.
 - **JVM bytecode:** libraries target 21. The game client stays on 23 because GameTools requires it.
 - **Logging:** kotlin-logging, which logs through slf4j on the JVM, so logback still works there. This replaces the "libraries use slf4j" rule, since slf4j is JVM-only.
-- **Tests:** shared tests use `kotlin.test` with hand-written fakes. JUnit 5 and MockK are still used in JVM-only tests.
-- **Artifacts:** `graphics-core`, `graphics-desktop`, `assets-core`, `audio-core`, `audio-desktop` and `ui-core`.
+- **Tests:** shared tests use `kotlin.test`, with the fakes published in `graphics-test` from G4 (and `audio-test` from Phase 2). Test levels are selected by package filter (`com.spartanlabs.testing.<level>…`), since common tests can't use JUnit tags. JUnit 5 and MockK are still used in JVM-only tests. *(Changed 2026-10-20.)*
+- **Artifacts:** `graphics-core`, `graphics-desktop`, `graphics-test`, `graphics-bom`, `assets-core`, `audio-core`, `audio-desktop` and `ui-core`. *(`graphics-test` and `graphics-bom` added 2026-10-20; `audio-test` follows in Phase 2.)*
 - **Publishing:** copies GeneralTools' setup: the `com.vanniktech.maven.publish` plugin with Central Portal and signing, released by hand with no publish workflow.
-- **CI:** GitHub Actions. A `windows-latest` job runs the full build and tests; `macos-latest` and `ubuntu-latest` jobs compile only.
+- **CI:** GitHub Actions. A `windows-latest` job runs the full build and every test that doesn't open a GL context; an `ubuntu-latest` job compiles and runs the GL renderer's tests on llvmpipe under Xvfb; a `macos-latest` job compiles only. *(Corrected 2026-10-19; see the roadmap §2.6.)*
 - **Coding rules:** `.aiassistant/rules` is copied into each new repo, with the logging and testing rules adjusted as above.
 - **Branches:** one per PR, named `<type>/<pr-id>-<slug>` (e.g. `feature/g1-build-skeleton`). This matches the `feature/…` and `chore/…` branches these repos already use.
 
@@ -347,7 +346,7 @@ Rules for every PR:
 | PR | Content | Depends on |
 |---|---|---|
 | **G1** | Skeleton: wrapper, catalog, `build-logic`, empty `graphics-core` (KMP) and `graphics-desktop` (JVM), CI, publishing config, coding rules | — |
-| **G2** | Basic types (contracts + default implementations) and `Camera` (world/screen conversion, zoom, pan, centre on, visible region); `CameraTest` ported from `NdcConverterTest` | G1 |
+| **G2** | Basic types taken from multiplatform GeneralTools, and `Camera` (world/screen conversion, zoom, pan, centre on, visible region); `CameraTest` ported from `NdcConverterTest` *(basic types from GeneralTools since 2026-10-20)* | G1, [GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7) |
 | **G3** | Shapes, world and screen layers, culling, picking, opt-in outlines with the default style; `PickingTest` and `SelectionOutlineTest` ported | G2 |
 | **G4** | Abstract input (key ids, pointer info) and platform contracts: surface, renderer, textures, text measurement, frames and clock, input source; new `assets-core` module with `AssetSource` | G3 |
 | **G5** | `graphics-desktop`: GLFW window, single GL 3.3 renderer (shapes and outlines), textures, STBEasyFont text, classpath assets, frame loop, GLFW input, the macOS/Linux handling. Can't be unit-tested without a GPU; verified through C1. | G4 |
@@ -362,14 +361,14 @@ Rules for every PR:
 | **U2** | Element tree: basic elements on shapes (with their opt-in outlines), `Group` with runtime add/remove and opt-in clipping, fractional positioning, aspect lock, conversion to shapes; layout tests from `UiTest` ported | U1, G3 |
 | **U3** | Dispatch and callbacks: pointer routing, opt-in pass-through, hover, triggers, guard veto, multiple callbacks with context and removable handles, the unhandled-input sink, scene and stage key binding tables; dispatch tests ported | U2, G4 |
 | **U4** | Built-in elements: `Label`, `Panel`, `Button` (with the `shortcut` shorthand), `StatBar`, `Image`; `ButtonTest`, `StatBarTest`, `PortraitTest` ported | U3 |
-| **U5** | Opt-in scrolling for `Group` | U2 |
+| **U5** | Opt-in scrolling for `Group` | U2, U3, G4 *(U3 and G4 added 2026-10-19: scrolling needs dispatch and input)* |
 | **U6** | Release `0.1.0` (manual, by you) | U1–U5, G7 |
 
 ### Phase 3: game client (this repo)
 
 | PR | Content | Depends on |
 |---|---|---|
-| **C1** | Remove all library code from this repo. Depend on graphics-desktop and ui-core through the composite build. Snapshot adapter plus GeneralTools adapters. A minimal `Main` opens a window and draws the world from `STATE` on the platform frame driver. Networking untouched. | G5 |
+| **C1** | Remove all library code from this repo. Depend on graphics-desktop and ui-core through the composite build. Snapshot adapter (no GeneralTools adapters: the libraries use GeneralTools' types directly, since 2026-10-20). A minimal `Main` opens a window and draws the world from `STATE` on the platform frame driver. Networking untouched. | G5 |
 | **C2** | Game UI on SpartanUI: viewport as the unhandled-input sink, `GameView`, `ClickState`, inspector and menu scenes, `M` / `A` / `S` / `B` through the key tables; `ViewportTest` ported | C1, U4 |
 | **C3** | Game visuals: edge panning on the library camera and input, click markers, and the selected unit opted in to the default outline. Update or retire `camera-follow-selection.md`, which is written against `Window`. | C1 |
 | **C4** | Audio through `audio-desktop` | C1, G6 |
@@ -387,19 +386,19 @@ These were deferred, or belong to another repo. Each needs its own plan when its
 - **Layout features:** layout containers, fixed-pixel sizes (only if a user needs them), focus and gamepad navigation.
 - **Drawing features:** real fonts; shapes beyond the three (lines, circles, polygons, rounded corners, gradients, 9-slice, custom shaders); outline shapes beyond the axis-aligned rectangle.
 - **A rebinding screen and saved keymaps.** The key table supports both; the screens are game work.
-- **Upstream work:** the GameTools client itself ([MyGameTools#132](https://github.com/SpartanLabsGaming/MyGameTools/issues/132)), and multiplatform GeneralTools ([GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7)).
+- **Upstream work:** the GameTools client itself ([MyGameTools#132](https://github.com/SpartanLabsGaming/MyGameTools/issues/132)), and multiplatform GeneralTools ([GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7)), which is now a prerequisite of G2 (2026-10-20).
 
 ## Risks
 
 - **Composite builds with KMP:** Gradle substitutes included KMP builds in modern Gradle and Kotlin, but this path has had rough edges. U1 and C1 prove it early, before anything depends on it.
 - **No GPU in CI or in cloud sessions:**
-  - `graphics-desktop` can be compiled but not run there, as is true of `Window` today.
+  - `graphics-desktop` can't run on a GPU there, as is true of `Window` today, but on Linux runners its GL renderer can be tested on a software rasteriser (llvmpipe under Xvfb). *(Corrected 2026-10-19.)*
   - The pure logic (camera, picking, outlines, layout, dispatch, key tables) stays in common code and gets full unit tests.
   - The renderer is verified by running the game client by hand.
 - **JDK 23 for the game client:** GameTools needs a JVM 23 runtime. This cloud environment has only JDK 21, and the toolchain download is blocked, so the game client can't build here until JDK 23 is provided (setup script or environment). The libraries on 21 aren't affected.
 - **No playable build from C1 to C3:** accepted.
 - **API churn across repos:** the composite build makes iterating cheap, and nothing is released until G7 and U6.
-- **GeneralTools#7 will change the adapters:** that's contained to the game client by design.
+- **GeneralTools#7 gates G2:** the basic types come from it, so G2 onward waits for its multiplatform release, and the game client needs GameTools on the same GeneralTools major. *(Changed 2026-10-20; previously only the client's adapters depended on #7.)*
 - **GameTools 6.0.0 changes the wire format** ([MyGameTools#124](https://github.com/SpartanLabsGaming/MyGameTools/issues/124): framed `webtools-udp` 2.0.0). The interim `NetworkClient` breaks then. The options are:
   - #132 ships alongside #124, which is what the issue suggests;
   - the game client stays on GameTools 5.x until #132 ships;
