@@ -1,5 +1,22 @@
 # Architecture: SpartanGraphics repository, modules, packages and artifacts
 
+> **Superseded on 2026-10-20** by the roadmap, `docs/roadmap/vision-and-roadmap.md`. Its target
+> architecture is in §2, and the decisions that settled this draft's proposals are in §5 (A to H).
+> Issue #1's stage list and its scope-change comments carry the resulting Phase 1. What happened
+> to each proposal:
+>
+> - **§4's kept decisions** (separate backend modules, one core module, audio in this repo, no
+>   umbrella) stand.
+> - **§5.1, one `assets` module:** rejected (decision B). `assets-core` stays, with its loaders in
+>   the graphics backends. The `suspend` `AssetSource` was adopted on #1 (decision A).
+> - **§5.2 `graphics-test`, §5.3 `graphics-bom`, §5.5 guarded backend contracts, §5.6 test levels
+>   by package filter:** adopted (decisions C, D, E, F). `audio-test` was added for Phase 2.
+> - **§5.4, one version for the repo:** kept as a roadmap assumption.
+> - **§7, open question 1 (artifact prefix):** names kept (decision G).
+> - **§7, open question 2 (basic types):** neither interfaces nor own final classes. The basic
+>   types come from multiplatform GeneralTools (GeneralTools#7), and G2 waits for it (decision H).
+> - **§7, open question 3 (PR sequence):** mapped onto G1–G7 through #1's scope-change comments.
+
 ## Header / Association
 
 - **Covers:** [SpartanLaboratories/SpartanGraphics#1](https://github.com/SpartanLaboratories/SpartanGraphics/issues/1)
