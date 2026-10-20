@@ -190,8 +190,8 @@ with no public API change. The alternative is to create `graphics-gl` at G1.
   the source, never of `AssetSource`.
 
 **The audio modules.** `audio-core` depends on `assets` and on no graphics module. It owns the
-contract and all policy: bus gains, voice limits and stealing, fades, crossfade, ducking rules,
-positional gain and pan, and the web unlock rule. A backend receives only per-voice gain, pan,
+contract and all policy: bus gains, voice limits and stealing, fades, crossfade, positional gain
+and pan, and the web unlock rule. A backend receives only per-voice gain, pan,
 rate and loop, plus lifecycle. `audio-desktop` is the JLayer port at 0.1.0, then OpenAL Soft
 through LWJGL with `stb_vorbis` for Ogg and JLayer retained for MP3. `audio-android` uses
 `SoundPool` for clips and `MediaPlayer` for streams, with audio focus. `audio-web` uses Web Audio
@@ -410,7 +410,7 @@ What crosses each boundary:
 - **Mechanism in the library, policy as parameters.** The library ships the core mechanism and a
   default for every rule a consumer might reasonably disagree with. Batch capacity, the frame
   delta cap, glyph-atlas page size and eviction, the line breaker, voice limits and stealing,
-  attenuation, ducking, the unlock policy and the format preference are each a parameter, a
+  attenuation, the unlock policy and the format preference are each a parameter, a
   strategy object or a registry, with today's behaviour as the default.
 - **Common code owns the logic; backends stay thin.** Shapes, tessellation, culling, layer and
   order sorting, clipping, outlines, text layout, atlases, animation, tile-map chunk caches,
@@ -764,7 +764,7 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
    encoder padding makes seamless loops impossible.
 6. **The audio model (A2).** The `AudioBus` tree (layouts such as `ui`, `combat`, `ambient`,
    `music` under a master), streamed music through `StreamSource`, fades and crossfade, voice
-   limits and stealing, ducking rules. Policy lives in `audio-core`. Streaming and locator
+   limits and stealing. Policy lives in `audio-core`. Streaming and locator
    capabilities are added to `assets`. `Listener` is reserved here and used in Phase 13.
 7. **The OpenAL desktop backend.** `audio-desktop` moves from the JLayer port to OpenAL Soft with
    `stb_vorbis`, keeping JLayer for MP3; `audio-test` ships the fake backend and the audio
@@ -1035,7 +1035,8 @@ Listed, unscheduled, and not part of 1.x planning:
 - **R8:** parallax, skeletal animation, 2D lighting.
 - **T2:** CJK, complex-script shaping, right-to-left (HarfBuzz behind `TextShaper`).
 - **I2:** gamepad (new events plus a capability).
-- **A4:** reverb, filters, ducking beyond the bus rules (the reserved bus-effects seam).
+- **A4:** reverb, filters and ducking (the reserved bus-effects seam). *(All ducking, including
+  simple rules over bus volumes, kept here on 2026-10-19.)*
 - **Official macOS and Linux.** CI compiles the desktop backend on both; they should work and are
   untested. Official status needs a test machine per platform.
 - **Retained tile geometry (tile-map tier 2),** on a measured need: only if a measured tile scene
