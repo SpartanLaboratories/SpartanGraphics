@@ -92,7 +92,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
   - Reports the visible world region. The library renders only what the camera can see.
   - Exposes movement operations: pan by an amount, zoom, centre on a world point.
   - Ports today's `Camera` / `NdcConverter` and fixes their wrong `networking` package.
-- **Shapes:** what every platform renderer has to draw. They sit in two layers:
+- **Shapes:** what the library draws. graphics-core turns them into batches that each platform's backend executes *(frame-level contract, 2026-10-19; see #1's scope-change comment)*. They sit in two layers:
   - The **world layer** is drawn through the camera.
   - The **screen layer** uses window pixels and holds the UI.
 
@@ -110,7 +110,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
   - UI-specific input (hit-testing, hover, triggers, shortcuts) is layered on top of this in ui-core.
 - **Platform contracts:**
   - `Surface` (size, resize, close request). Each platform creates its own window or surface.
-  - `Renderer` (draw one frame of shapes and their outlines).
+  - `RenderBackend`: executes a `RenderFrame`, the ordered batches graphics-core builds from a frame's shapes and outlines. It creates textures from decoded pixels and pipelines from descriptors, and reports its capabilities and device loss. *(Replaces the shape-level `Renderer`, 2026-10-19; see #1's scope-change comment.)*
   - Textures.
   - Text measurement.
   - Frame scheduling and clock. Each platform decides when frames happen and calls the game once per frame. The game's own fixed-timestep loop (or GameTools') runs inside that call.
@@ -120,7 +120,7 @@ game client ──> ui-core ──api──> graphics-core ──> assets-core
 ### graphics-desktop (JVM, LWJGL)
 
 - **Window:** the GLFW window and GL context, taken from `Window.initWindow` / `initOpenGl`.
-- **Renderer:** one OpenGL 3.3 renderer for every shape and outline. It merges today's two pipelines (the actor drawing in `Window` and the quad and text drawing in `UiRenderer`).
+- **Renderer:** one batched OpenGL 3.3 `RenderBackend` that executes every frame graphics-core builds *(frame-level contract, 2026-10-19)*. It merges today's two pipelines (the actor drawing in `Window` and the quad and text drawing in `UiRenderer`).
 - **Textures and text:** `TextureCache` and `Shaders` move here as-is. v1 text ports the STBEasyFont bitmap font; real fonts come later.
 - **Assets:** an `AssetSource` that loads from the classpath.
 - **Frames and input:** a desktop frame loop on `glfwGetTime`, and GLFW input translated into the abstract input.

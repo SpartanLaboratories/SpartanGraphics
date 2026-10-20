@@ -650,7 +650,7 @@ on named reference hardware.
 | **GameTools** | Neither side depends on the other. Every graphics phase is independent of GameTools. The client features gated on GameTools (tiled terrain, fog and minimap, event-driven positional sound, ability and item UI) are post-1.0, and the library's data-shape assumptions are: map visuals are supplied by the client, the visibility mask is built by the consumer, and event positions come from the client. |
 | **GeneralTools** | No dependency. The libraries own `Color`, `Point`, `Size` and `Rect`. Under the recommendation that follows, the client's adapters are permanent. **Open (recommended: the libraries never take GeneralTools types):** GeneralTools#7 (multiplatform) would help at most the GeneralTools half of the client's adapters, because GameTools remains JVM-only. |
 | **WebTools** | No dependency. WebTools is UDP only and browsers have no raw UDP socket, so a real browser client needs a browser-capable transport in WebTools and a multiplatform GameTools protocol. Neither is scheduled, and no phase depends on them: the web backend is proven by its sample app alone. |
-| **The split plan** (`docs/plans/spartan-libraries-split.md`) | The baseline this roadmap extends. Corrected on 2026-10-19 for two points: U5 (scrolling) depends on U3 and G4, not on U2 alone; and its CI and GPU statements now say no runner has a GPU, so the renderer is verified on software rasterisers and timed on reference hardware. Two more corrections wait for their open decisions: its shape-level `Renderer` (section 5, item A) and its line that the client's adapters go away when GeneralTools#7 lands (item N). SpartanUI's copy of the plan is corrected when SpartanUI's work starts. |
+| **The split plan** (`docs/plans/spartan-libraries-split.md`) | The baseline this roadmap extends. Corrected on 2026-10-19 for two points: U5 (scrolling) depends on U3 and G4, not on U2 alone; and its CI and GPU statements now say no runner has a GPU, so the renderer is verified on software rasterisers and timed on reference hardware. A third correction the same day followed #1's adoption of decision A: its shape-level `Renderer` became the frame-level `RenderBackend`. One more waits for its decision: its line that the client's adapters go away when GeneralTools#7 lands (item N). SpartanUI's copy of the plan is corrected when SpartanUI's work starts. |
 
 ---
 
@@ -672,48 +672,55 @@ and Phase 3 (the game client, stages C1 to C5) belong to `SpartanLaboratories/Sp
 Summarised from issue #1; not re-planned here. Serves SpartanUI's stages U1 to U6 and the game
 client's stages C1 to C4. Upstream prerequisites: none.
 
-1. **G1: skeleton.** Gradle wrapper, version catalog, `build-logic`, empty `graphics-core` (KMP)
-   and `graphics-desktop` (JVM), CI, publishing config, coding rules.
-2. **G2: basic types and `Camera`.** World/screen conversion, zoom, pan, centre on, visible
-   region.
-3. **G3: shapes and layers.** Shapes, world and screen layers, culling, picking, opt-in outlines
-   with the default style, and a screen-space clip rectangle.
-4. **G4: abstract input and the platform contracts.** Surface, renderer, textures, text
-   measurement, frames and clock, input source; a new `assets-core` module with `AssetSource`.
-5. **G5: `graphics-desktop`.** GLFW window, one batched GL 3.3 renderer with scissor clipping,
-   textures, bitmap-font text, classpath assets, frame loop, GLFW input, macOS/Linux handling.
-6. **G6: audio.** `audio-core` and `audio-desktop`, loading through `assets-core`.
+1. **G1: skeleton.** Gradle wrapper, version catalog, `build-logic`, empty `graphics-core` (KMP:
+   `jvm()` plus `js()` as the non-JVM compile check) and `graphics-desktop` (JVM), CI,
+   publishing config, coding rules.
+2. **G2: basic types and the camera.** Basic types, a 4x4 matrix type, and `Camera2D`
+   (world/screen conversion, zoom, pan, centre on, visible region) behind a thin `Camera`
+   interface.
+3. **G3: shapes and layers.** Shapes (a textured rectangle with a texture source rectangle;
+   `Text` taking a `TextStyle` and an opaque `Font`); world and screen layers as an ordered list
+   of layers, each with its own camera, clip and viewport and ordered within by an integer order
+   key; culling; picking returning `PickHit`; opt-in outlines with the default style; and a
+   screen-space clip rectangle whose nested clips intersect. The draw model emits a `RenderFrame`
+   of batches.
+4. **G4: abstract input and the platform contracts.** Input shaped like W3C Pointer Events, with
+   physical keys named by `KeyboardEvent.code`; a surface with density and depth and stencil
+   request fields; a frame-level `RenderBackend` (textures from decoded pixels, pipelines from
+   descriptors that name their vertex layout, `submit` of a `RenderFrame` carrying each layer's
+   view-projection, capabilities, device loss); text measurement taking a `TextStyle` and
+   returning a layout; frames and clock; input source; a new `assets-core` module with a
+   `suspend`, `Result`-returning `AssetSource` and its name grammar.
+5. **G5: `graphics-desktop`.** GLFW window, one batched GL 3.3 renderer implementing
+   `RenderBackend`, with scissor clipping and one view-projection uniform per layer; textures,
+   bitmap-font text, classpath assets, frame loop, GLFW input, macOS/Linux handling.
+6. **G6: audio.** `audio-core` and `audio-desktop`, loading through `assets-core`, with `play`
+   returning a generation-checked `Voice` handle.
 7. **G7: release.** `0.1.0` to Maven Central, by hand.
 
 *Ships as 0.1.0. The baseline release; nothing precedes it to break.*
 
-> **Pending changes to Phase 1.** The shapes below belong in the Phase 1 stages, but issue #1 does
-> not carry them yet, and none is approved for #1. The stage list above is #1's, exactly. The 3D
-> seams are part of the target architecture (2.4) whatever happens here; for them only the stage
-> is open. The other rows are recommended contract shapes.
-> **If #1 adopts a shape, it lands in the stage named here and Phase 2 carries only the remaining
-> work. If #1 does not, it lands in the 0.2.0 batch of breaking changes (Phase 2), which is why
-> Phase 2 is a breaking release.** Recommended: adopt them all in one scope-change comment before
-> G2 starts, because no code exists yet and each is cheaper to build in than to retrofit, and
-> because SpartanUI 0.1.0 would otherwise break at 0.2.0. This is open decision A (section 5). A
-> scope-change comment covering the first ten rows is drafted and awaits approval before it is
-> posted to #1.
+> **Changes to Phase 1.** The shapes below belong in the Phase 1 stages. Issue #1 adopted the
+> first ten on 2026-10-19, in its scope-change comment of that date (decision A), and the stage
+> list above now carries them. The last three are still open (section 5, decisions B to J). If #1
+> adopts one, it lands in the stage named here. If not, it moves to Phase 2, and any of them that
+> changes published API joins the 0.2.0 batch of breaking changes.
 >
-> | Shape | Stage |
-> |---|---|
-> | The 3D seams: `Matrix4`, `Camera` over `Camera2D`, per-layer view-projection, frames as ordered layers with camera, clip and viewport, the integer order key, depth and stencil request fields, vertex-layout-naming pipeline descriptors, `PickHit` | G2 to G5 |
-> | The frame-level `RenderBackend` and `RenderFrame` in place of the split plan's shape-level `Renderer` (the batch state carries the G3 clip) | G3, G4, G5 |
-> | Nested, intersecting clips | G3 |
-> | A texture source rectangle on the textured rectangle | G3 |
-> | Pointer-Events-shaped input with `code`-named keys | G4 |
-> | The `TextStyle`, opaque `Font` and `TextMeasurer` shape (a layout result that separates line box from ink bounds) | G4 |
-> | A `suspend` `AssetSource` returning `Result`, with the name grammar | G4 |
-> | Density on `Surface` | G4 |
-> | A generation-checked `Voice` handle (at least `stop`) in the audio contract | G6 |
-> | G1's non-JVM compile-check target: `js` (the split plan leaves the choice to G1) | G1 |
-> | The module proposals marked open in 2.1: `assets` for `assets-core`, `graphics-test`, `graphics-bom`, guarded SPIs, test packages by level, artifact prefix, basic types as final classes | G1 to G4 |
-> | Whether `graphics-gl` is created in Phase 1 (2.1) | G1, G5 |
-> | Where the Level 4c gate first lands (Phase 2, item 1, or G5) | G5 |
+> | Shape | Stage | Status |
+> |---|---|---|
+> | The 3D seams: `Matrix4`, `Camera` over `Camera2D`, per-layer view-projection, frames as ordered layers with camera, clip and viewport, the integer order key, depth and stencil request fields, vertex-layout-naming pipeline descriptors, `PickHit` | G2 to G5 | Adopted 2026-10-19 |
+> | The frame-level `RenderBackend` and `RenderFrame` in place of the split plan's shape-level `Renderer` (the batch state carries the G3 clip) | G3, G4, G5 | Adopted 2026-10-19 |
+> | Nested, intersecting clips | G3 | Adopted 2026-10-19 |
+> | A texture source rectangle on the textured rectangle | G3 | Adopted 2026-10-19 |
+> | Pointer-Events-shaped input with `code`-named keys | G4 | Adopted 2026-10-19 |
+> | The `TextStyle`, opaque `Font` and `TextMeasurer` shape (a layout result that separates line box from ink bounds) | G3, G4 | Adopted 2026-10-19 |
+> | A `suspend` `AssetSource` returning `Result`, with the name grammar | G4 | Adopted 2026-10-19 |
+> | Density on `Surface` | G4 | Adopted 2026-10-19 |
+> | A generation-checked `Voice` handle (at least `stop`) in the audio contract | G6 | Adopted 2026-10-19 |
+> | G1's non-JVM compile-check target: `js` (the split plan leaves the choice to G1) | G1 | Adopted 2026-10-19 |
+> | The module proposals marked open in 2.1: `assets` for `assets-core`, `graphics-test`, `graphics-bom`, guarded SPIs, test packages by level, artifact prefix, basic types as final classes | G1 to G4 | Open: decisions B to H |
+> | Whether `graphics-gl` is created in Phase 1 (2.1) | G1, G5 | Open: decision I |
+> | Where the Level 4c gate first lands (Phase 2, item 1, or G5) | G5 | Open: decision J |
 
 ### Phase 2: Real fonts, text input and the audio engine (0.2.0)
 
@@ -729,11 +736,12 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
    first item so that fonts, glyph atlases and every later feature are measured against the gate
    from their first commit. **Open (recommended: here):** the gate's natural home is with G5's
    batched renderer, which would make it part of #1. It is placed here because #1 has already
-   taken two scope changes, because both halves depend on contract shapes (`RenderFrame`, frame
-   statistics) that are themselves pending, and because the reference hardware is not yet named.
-   The cost is that 0.1.0's renderer ships without the gate.
-2. **The 0.2.0 batch of breaking changes.** Every pending Phase 1 shape (above) that #1 did not
-   adopt. If #1 adopted them all, this item is empty.
+   taken three scope changes, because the frame statistics the structural counters read are not
+   among #1's contracts, and because the reference hardware is not yet named. The cost is that
+   0.1.0's renderer ships without the gate.
+2. **The 0.2.0 batch of breaking changes.** #1 adopted the ten contract shapes on 2026-10-19, so
+   this item holds only the module proposals still open in section 5 (decisions B to H) that #1
+   does not adopt and that change published API. If #1 adopts them all, this item is empty.
 3. **Real fonts (T1).** `Font`, `TextStyle`, `TextLayout`, `TextMeasurer`; a font-table reader; a
    left-to-right shaper with kerning; greedy wrapping with a replaceable line breaker; sizes; a
    runtime glyph atlas with LRU pages in common code; the `GlyphRasterizer` SPI with an
@@ -766,10 +774,10 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
 Serves the game client's four sound categories (ui, combat, ambient, atmosphere) and readable text
 for both consumers.
 
-*Ships as 0.2.0, with breaking changes: every pending Phase 1 contract shape that #1 did not
-adopt. If #1 did not adopt the text and `Voice` shapes, those include the text API that replaces
-the bitmap-font-only `Text` and an audio contract reshaped beyond the G6 subset. Everything else
-in the phase is additive.*
+*Ships as 0.2.0. #1 adopted the ten contract shapes on 2026-10-19, including the text shape and
+the `Voice` handle, so real fonts and the audio engine build on contracts 0.1.0 already has. The
+only breaking changes left for this boundary are those in item 2. Everything else in the phase is
+additive.*
 
 ### Phase 3: Android (0.3.0)
 
@@ -1055,8 +1063,8 @@ the findings files it links.
 
 ### 4.1 Build the 1.0 contract shapes into Phase 1
 
-Issue #1 should adopt the pending Phase 1 shapes (the note under Phase 1; open decision A) before
-G2 starts. The reasons:
+Issue #1 adopted the ten Phase 1 contract shapes (the note under Phase 1; decision A) on
+2026-10-19, before G2 starts. The reasons:
 
 - No code exists yet, so every shape costs a design change now. Later it costs a migration.
 - SpartanUI 0.1.0 is built on G3 and G4. Every shape left to 0.2.0 breaks SpartanUI at its first
@@ -1195,7 +1203,7 @@ sections 2 and 3 point here.
 
 | ID | Decision | Recommendation and notes | Settle by |
 |----|----------|--------------------------|-----------|
-| A | **The pending Phase 1 contract shapes.** Adopt each on #1, or land it in the 0.2.0 batch. | **Adopt all of them in one scope-change comment on #1** (4.1). The shapes are the first ten rows of the note under Phase 1:<ul><li>the 3D seams (part of the target architecture; only their stage is open);</li><li>the frame-level `RenderBackend` and `RenderFrame`;</li><li>nested, intersecting clips;</li><li>the texture source rectangle;</li><li>Pointer-Events input with `code`-named keys;</li><li>the `TextStyle`, `Font` and `TextMeasurer` shape;</li><li>a `suspend`, `Result`-returning `AssetSource`;</li><li>density on `Surface`;</li><li>a generation-checked `Voice` at G6;</li><li>`js` as G1's compile-check target.</li></ul>The comment is drafted and awaits approval before posting. Whatever #1 does not adopt makes Phase 2 carry it as breaking changes. | before G2 |
+| A | **The Phase 1 contract shapes.** Adopt each on #1, or land it in the 0.2.0 batch. | **Settled 2026-10-19: all ten adopted** in #1's scope-change comment of that date; #1's stage list carries them (4.1). The shapes are the first ten rows of the note under Phase 1:<ul><li>the 3D seams (part of the target architecture; only their stage is open);</li><li>the frame-level `RenderBackend` and `RenderFrame`;</li><li>nested, intersecting clips;</li><li>the texture source rectangle;</li><li>Pointer-Events input with `code`-named keys;</li><li>the `TextStyle`, `Font` and `TextMeasurer` shape;</li><li>a `suspend`, `Result`-returning `AssetSource`;</li><li>density on `Surface`;</li><li>a generation-checked `Voice` at G6;</li><li>`js` as G1's compile-check target.</li></ul>The remaining Phase 1 rows (the module proposals, `graphics-gl`, the gate) are decisions B to J. | settled 2026-10-19 |
 | B | **The asset module form.** One `assets` module with its loaders in platform source sets; `assets-core` with loaders in the graphics backends (#1 today); or `assets-core` plus `assets-desktop`, `assets-android` and `assets-web`. | **One `assets` module.** It keeps an audio-only app off the graphics backend at no extra artifact. The per-family form is the fallback. | before G4 |
 | C | **Test fixtures and conformance suites.** `graphics-test` and `audio-test`, each holding fakes and the suites; separate `*-conformance` modules; or no published fakes. | **`graphics-test` and `audio-test`.** SpartanUI's and the client's tests need the fakes. The recording backend doubles as the example backend (K). | before G4 (`graphics-test`); Phase 2 (`audio-test`) |
 | D | **`graphics-bom`.** | **Adopt.** It stops a mixed-version family from failing at runtime with `AbstractMethodError`. A backend factory also declares the contract revision it was built for. | before G7 |
@@ -1374,11 +1382,10 @@ repositories at that point:
 - The CI and GPU statements say no runner has a GPU, so the renderer is verified on software
   rasterisers (llvmpipe on Linux runners, headless Chromium, the Android emulator) and timed on
   reference hardware.
+- Its shape-level `Renderer` became the frame-level `RenderBackend`, once #1 adopted decision A.
 
-**Two corrections wait for their decisions:**
-- its shape-level `Renderer` gives way to the frame-level contract if decision A adopts it;
-- its line that the client's adapters go away when GeneralTools#7 lands is corrected under
-  decision N.
+**One correction waits for its decision:** its line that the client's adapters go away when
+GeneralTools#7 lands is corrected under decision N.
 
 The items on its "Not in this plan" list belong in four places:
 - this repository's items (the Android and web backends, real fonts, the further shapes and
