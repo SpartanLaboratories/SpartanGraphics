@@ -10,17 +10,22 @@
 - **Origin:** a scoping interview with Spartak Singh on 2026-10-11, on "a roadmap for this repo",
   and his answers to the research findings on 2026-10-19 (section 1).
 - **Status:** direction document. The target architecture (section 2) and the phase list
-  (section 3) were signed off on 2026-10-19. No source, test or build file exists. Each phase is
-  planned in its own issue and plan before implementation. The open decisions in section 5 block
-  only the phases that depend on them.
+  (section 3) were signed off on 2026-10-19. Decisions A to H, N and T in section 5 were settled
+  on 2026-10-19 and 2026-10-20. No source, test or build file exists. Each phase is planned in its
+  own issue and plan before implementation. The decisions still open in section 5 block only the
+  phases that depend on them.
 - **Current baseline:** `main` @ `50b61e2` (a README, the Apache-2.0 licence and the split plan).
   Issue [#1](https://github.com/SpartanLaboratories/SpartanGraphics/issues/1), "Phase 1:
   SpartanGraphics (tracking)", is the source of truth for Phase 1.
 - **Related documents:**
   - `docs/plans/spartan-libraries-split.md`: the split plan. It is the baseline, and this roadmap
     extends it.
-  - `docs/plans/1-phase-1-spartangraphics/architecture.md`: a draft that proposes changes to the
-    split plan's module set. None is accepted; each appears below as a marked open item.
+  - `docs/plans/1-phase-1-spartangraphics/architecture.md`: a draft that proposed changes to the
+    split plan's module set. Its proposals were settled on 2026-10-19 and 2026-10-20 (section 5,
+    decisions B to H).
+  - [SpartanLaboratories/GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7):
+    multiplatform GeneralTools 3.x, whose `Color` and geometry types `graphics-core` uses
+    directly. G2 onward waits for it.
   - `docs/roadmap/research/README.md`: the research plan, the verification results, and the
     summary this design rests on. The findings files beside it hold the detail.
   - `MyGameTools/docs/framework-vision-and-roadmap.md`: the sibling roadmap, whose shape and
@@ -45,17 +50,18 @@ From the interview of 2026-10-11, refined on 2026-10-19 by the answers to the re
 | 4 | What 1.0 freezes | **The app-facing API and the backend contracts.** The contracts graduate to `@SupportedExtension` with a documented example backend. Seams no consumer has proven stay Experimental behind `@RequiresOptIn`. |
 | 5 | Platforms | **Windows, Android and web are official.** macOS and Linux "should work, untested", listed under Later. iOS is out of the roadmap. |
 | 6 | Order | **Real fonts and text input first, then Android, then web, then 1.0, then the remaining features.** *(Amended 2026-10-19:)* playback control and the audio model (buses, streamed music, crossfade) move ahead of Android, on an OpenAL desktop backend, as an independent audio track in Phase 2. Android and web audio are written once, in Phases 3 and 4. Positional audio stays after 1.0. |
-| 7 | Dimension | **2D with room for 3D.** *(Refined 2026-10-19:)* the room is reserved at the renderer and camera boundary. The reservations are listed in 2.4. Shapes, `Point`, `Size` and `Rect` stay strictly 2D. A pre-1.0 spike drives a depth-tested 3D layer through the frozen contracts. The 3D track is beyond this roadmap, and every scheduled phase is 2D. |
+| 7 | Dimension | **2D with room for 3D.** *(Refined 2026-10-19:)* the room is reserved at the renderer and camera boundary. The reservations are listed in 2.4. Shapes, `Point`, and the size and rectangle types (GeneralTools' since decision H) stay strictly 2D. A pre-1.0 spike drives a depth-tested 3D layer through the frozen contracts. The 3D track is beyond this roadmap, and every scheduled phase is 2D. |
 | 8 | Performance | **Desktop: 10k textured quads of about 32 px (single atlas, alpha-blended, moving and rotating; about 10 Mpx covered at 1080p) at 60 fps on a mid-range desktop GPU.** *(Unit fixed 2026-10-19.)* Every gate is stated as sprites plus covered area. The Android and web targets are set by research (2.6) and confirmed by the first sample-app measurement. Batched drawing comes early, enforced by a Level 4c performance gate. |
 | 9 | Proof | **An unpublished sample app per platform in this repository proves the Android and web backends.** The game client proves the desktop backend. |
 | 10 | CI hosts | *(Settled 2026-10-19:)* **Linux runners may host the official platforms' tests**: the Android emulator, headless Chromium, and llvmpipe pixel tests of the shared GL renderer. The Linux desktop backend itself (windowing, input, packaging) stays untested. macOS is compile-only. |
 | 11 | Feature scope | **Scheduled** (the codes label the items in section 3):<ul><li>**R1** more shapes (lines, circles, polygons, rounded rectangles, gradients, nine-slice), with SpartanUI's needs first;</li><li>**R2** more outline shapes (rotating with the object, ellipse);</li><li>**R3** sprite atlases and frame animation;</li><li>**R4** tile-map layers;</li><li>**R5** render-to-texture, several cameras or viewports, and a generic visibility mask, with the visibility rules left in the client;</li><li>**R6** particles (late);</li><li>**R7** custom shaders and post-processing (Experimental, last);</li><li>**T1** real fonts;</li><li>**I1** touch and gestures, text input with IME and clipboard, custom cursors;</li><li>**A1** playback control and WAV/OGG;</li><li>**A2** volume buses and streamed music with crossfade;</li><li>**A3** 2D positional audio (late);</li><li>**S1** an asset manager;</li><li>**S2** hot reload and a build-time asset plugin.</li></ul>**Later:** **R8** parallax, skeletal animation and 2D lighting; **T2** CJK, shaping and right-to-left text; **I2** gamepad; **A4** reverb, filters and ducking. **Out:** nothing. |
-| 12 | Baseline | **The split plan is the baseline.** Phase 1 is its G1 to G7, summarised from issue #1 and not re-planned. The Phase 1 architecture draft's proposals are open decisions. |
+| 12 | Baseline | **The split plan is the baseline.** Phase 1 is its G1 to G7, summarised from issue #1 and not re-planned. *(Settled 2026-10-19 and 2026-10-20:)* the Phase 1 architecture draft's proposals are decided (section 5, B to H). |
 | 13 | Rendering API | **Chosen by research:** the OpenGL family on every platform (2.1). |
 | 14 | Audio's home | **This repository,** in artifacts that depend on no graphics module. |
 | 15 | Shape set | **Closed.** Custom drawing only through the custom-shader seam. |
-| 16 | GeneralTools#7 | **An open decision** (section 5, item N). |
-| 17 | Documents | This roadmap and its research live in `docs/roadmap/`; it is not a plan and needs no issue folder. Roadmap Phase 1 is issue #1, and later phases are 2 to N. The split plan's Phases 2 and 3 belong to SpartanUI and the game client. |
+| 16 | GeneralTools#7 | *(Settled 2026-10-20:)* **`graphics-core` depends on multiplatform GeneralTools 3.x and uses its `Color`, `Point`, and size and rectangle types directly, with no interim types.** G2 onward waits for GeneralTools#7. Section 5, decisions H and N. |
+| 17 | Module set | *(Settled 2026-10-19 and 2026-10-20:)*<ul><li>`assets-core` keeps the asset contracts, and the platform loaders live in the graphics backends;</li><li>`graphics-test` (from G4) and `audio-test` (Phase 2) hold the fakes and conformance suites;</li><li>`graphics-bom` keeps every artifact on one version;</li><li>the backend contracts carry `@SubclassOptInRequired(ExperimentalGraphicsApi)` guards until 1.0;</li><li>test levels are selected by package filter;</li><li>the artifact names stay as they are.</li></ul>Section 5, decisions B to G. |
+| 18 | Documents | This roadmap and its research live in `docs/roadmap/`; it is not a plan and needs no issue folder. Roadmap Phase 1 is issue #1, and later phases are 2 to N. The split plan's Phases 2 and 3 belong to SpartanUI and the game client. |
 
 ---
 
@@ -74,26 +80,33 @@ SpartanLaboratories/SpartanGraphics    io.github.spartanlaboratories     package
   Published (Maven Central, shared version)
   graphics-bom         BOM   Constraints that keep every artifact below on one version.
   graphics-core        KMP   com.spartanlabs.graphics. The app-facing model and the backend
-                             contracts: basic types, Matrix4, cameras, shapes, layers, culling,
-                             picking, outlines, input model, text layout and glyph atlas, the
-                             batcher, RenderFrame, and every platform SPI.
+                             contracts: Matrix4, cameras, shapes, layers, culling, picking,
+                             outlines, input model, text layout and glyph atlas, the batcher,
+                             RenderFrame, and every platform SPI. Its basic types (Color, Point,
+                             and the size and rectangle types) are GeneralTools 3.x's, used
+                             directly through an api dependency.
   graphics-gl          KMP   com.spartanlabs.graphics.gl. The one batched GL renderer, written
                              against a thin GL seam (GlApi). commonMain only: no platform-specific
                              source set; compiled for the library's jvm and js targets.
   graphics-desktop     JVM   com.spartanlabs.graphics.desktop. LWJGL: GLFW window and input,
-                             GL 3.3 GlApi, stb_truetype rasteriser, cursors, clipboard, IME.
+                             GL 3.3 GlApi, stb_truetype rasteriser, cursors, clipboard, IME;
+                             the classpath and directory AssetSources.
   graphics-android     AAR   com.spartanlabs.graphics.android. GLSurfaceView, GLES 3.0 GlApi,
-                             touch, InputConnection text session, Canvas rasteriser.
+                             touch, InputConnection text session, Canvas rasteriser; the
+                             AssetManager AssetSource.
   graphics-web         KMP   com.spartanlabs.graphics.web. Canvas, WebGL2 GlApi, Pointer Events,
-                             hidden-textarea text session, OffscreenCanvas rasteriser.
-                             Targets: js; wasmJs compile-only until published.
+                             hidden-textarea text session, OffscreenCanvas rasteriser; the
+                             fetch AssetSource. Targets: js; wasmJs compile-only until published.
   graphics-test        KMP   com.spartanlabs.graphics.test. Recording backend, scripted input,
                              manual clock, fixed surface, and the conformance suites per SPI.
   graphics-assets      KMP   com.spartanlabs.graphics.assets. Texture, atlas and font loaders for
                              the asset manager. (Post-1.0.)
 
-  assets               KMP   com.spartanlabs.assets. AssetSource, name grammar, failure types,
-                             memory/prefix/composite sources, per-platform loaders.
+  assets-core          KMP   com.spartanlabs.assets. The AssetSource contract and its capability
+                             interfaces (streaming, locator, listing, change notification), the
+                             name grammar, failure types, the DecodedImage pixel contract, and
+                             the memory, prefix and composite sources. No platform loader: those
+                             live in the graphics backends.
   asset-manager        KMP   com.spartanlabs.assets.manager. Async loading with handles, caching,
                              unloading, preload groups. No graphics dependency. (Post-1.0.)
 
@@ -130,17 +143,22 @@ SpartanLabsGaming/MyGameClient         the GameTools RTS client, JVM 23
                                        graphics-desktop, audio-desktop, ui-core
 ```
 
+External library dependency: `graphics-core` takes multiplatform GeneralTools 3.x
+(`io.github.spartanlaboratories:GeneralTools`, GeneralTools#7) through `api`, so SpartanUI and
+the client see its types too.
+
 **The device-family rule.** Every library that has platform backends has one module and one
 artifact per device family: `-desktop`, `-android`, `-web`. A backend is a choice (OpenGL now,
 WebGPU, Vulkan or Metal possibly later), so it is never a source set inside a core module.
 Three consequences follow:
 
-- Pure-common modules (`graphics-core`, `graphics-gl`, `audio-core`, the test modules, the asset
-  manager and its adapters) have **no Android target**. An Android app resolves their `jvm`
-  variant. Their JVM bytecode level is therefore chosen with Android in mind (see the open item
-  under 2.5).
-- `graphics-android` and `audio-android` are plain `com.android.library` modules. Any KMP module
-  that has Android source sets uses `com.android.kotlin.multiplatform.library`. Only the Android
+- Pure-common modules (`graphics-core`, `graphics-gl`, `assets-core`, `audio-core`, the test
+  modules, the asset manager and its adapters) have **no Android target**. An Android app
+  resolves their `jvm` variant. Their JVM bytecode level is therefore chosen with Android in mind
+  (see the open item under 2.5).
+- `graphics-android` and `audio-android` are plain `com.android.library` modules. No KMP module
+  has Android source sets, because the Android asset loader lives in `graphics-android`. A KMP
+  module that ever needs them uses `com.android.kotlin.multiplatform.library`. Only the Android
   modules need the Android SDK to build.
 - A new backend (WebGPU, Vulkan, Metal, a miniaudio audio backend) is a new module that
   implements the same SPIs. It never replaces a GL backend.
@@ -160,27 +178,25 @@ package that depends on `GlApi` and never on LWJGL; a Level 2 test that runs the
 a recording `GlApi` keeps that seam honest. Phase 3 then moves the package into `graphics-gl`
 with no public API change. The alternative is to create `graphics-gl` at G1.
 
-**The asset modules.**
+**The asset modules.** *(Settled 2026-10-19 and 2026-10-20, decision B.)*
 
-- `assets` holds the `AssetSource` contract and everything audio and graphics both need to read
-  bytes by name. The contract is `suspend` and returns `Result`, with a written name grammar.
-  Capability interfaces (streaming, locator, listing, change notification) are separate
-  interfaces found with an `is` check, so adding one never breaks an implementer of the base.
-  The memory, prefix and composite sources live here.
-- **Open (recommended: one `assets` module with the loaders in its platform source sets).** Three
-  forms are on the table:
-  - *`assets`, loaders inside:* the classpath and directory loaders in `jvmMain`, the
-    `AssetManager` loader in `androidMain`, the `fetch` loader in the web source set. This keeps
-    an audio-only app off the graphics backend and costs no extra artifacts. It applies the device
-    family rule to dependency-bearing backends only and treats dependency-free platform glue
-    (a few small classes per platform) as source sets. The module needs the Android-KMP plugin.
-  - *`assets-core` with the loaders inside the graphics backends* (issue #1 and the split plan):
-    an audio-only app needs the graphics backend just to load a file.
-  - *`assets-core` plus `assets-desktop`, `assets-android`, `assets-web`:* strictly per family, at
-    the cost of three more artifacts to release by hand. This is the fallback if the first form
-    is rejected.
+- `assets-core` holds every asset contract:
+  - the `AssetSource` contract: `suspend`, returning `Result`, with a written name grammar;
+  - the capability interfaces (streaming, locator, listing, change notification). Each is a
+    separate interface found with an `is` check, so adding one never breaks an implementer of the
+    base;
+  - the failure types;
+  - the `DecodedImage` pixel contract that the texture store creates textures from;
+  - the memory, prefix and composite sources, which need no platform.
+- **The platform loaders live in the graphics backends:**
+  - the classpath and directory sources in `graphics-desktop`;
+  - the `AssetManager` source in `graphics-android`;
+  - the `fetch` source in `graphics-web`.
+- **Audio has no loader of its own.** It reads through the `AssetSource` the app passes in. An app
+  is expected to have a graphics backend, so its loader serves audio too. An app without one can
+  pass a memory source or its own small `AssetSource`.
 - `asset-manager` is its own module, post-1.0, generic over an `AssetLoader<T>` that it owns. It
-  depends on `assets` and coroutines and on nothing from graphics or audio. The texture, atlas
+  depends on `assets-core` and coroutines and on nothing from graphics or audio. The texture, atlas
   and font loaders live in `graphics-assets`, the clip and stream loaders in `audio-assets`, each
   depending on the manager and on its own core. This keeps `graphics-core` and `audio-core` free
   of the manager, so the manager stays opt-in. Putting the loaders in the manager would give it a
@@ -189,7 +205,8 @@ with no public API change. The alternative is to create `graphics-gl` at G1.
   by common code. The white fallback texture for a missing asset is a policy of the layer above
   the source, never of `AssetSource`.
 
-**The audio modules.** `audio-core` depends on `assets` and on no graphics module. It owns the
+**The audio modules.** `audio-core` depends on `assets-core` and on no graphics module. It
+reads through the `AssetSource` the app passes in. It owns the
 contract and all policy: bus gains, voice limits and stealing, fades, crossfade, positional gain
 and pan, and the web unlock rule. A backend receives only per-voice gain, pan,
 rate and loop, plus lifecycle. `audio-desktop` is the JLayer port at 0.1.0, then OpenAL Soft
@@ -206,9 +223,9 @@ the repository's shared version. **Open (recommended: the Gradle Plugin Portal, 
 `io.github.spartanlaboratories.assets`):** the alternative is Maven Central only, at the cost of
 consumers adding `mavenCentral()` to `pluginManagement` and of no Portal discoverability.
 
-**The test-fixture and conformance modules.**
-**Open (recommended: `graphics-test` and `audio-test`, each holding fakes and the conformance
-suites in separate packages).**
+**The test-fixture and conformance modules.** *(Settled 2026-10-19 and 2026-10-20, decision C.)*
+`graphics-test` arrives in G4 and `audio-test` in Phase 2. Each holds its fakes and its
+conformance suites, in separate packages.
 
 - `graphics-test` ships the recording `RenderBackend` (it stores each `RenderFrame` and the frame
   statistics), a scripted `InputSource`, a manual `Clock` and a fixed-size `Surface`. The
@@ -219,8 +236,6 @@ suites in separate packages).**
   conformance suites, one per SPI, which every backend subclasses in its own test source set.
 - `audio-test` does the same for audio, which cannot share `graphics-test` because audio has no
   graphics dependency.
-- Alternatives: separate `*-conformance` modules (keeps `kotlin-test` out of the fakes'
-  consumers, costs two artifacts), or no published fakes (every consumer re-invents them).
 - The seeded reference scenes and the capture/benchmark runner are not published: they are
   fixtures for this repository's sample apps and benchmark harness, in `reference-scenes`.
 
@@ -230,27 +245,40 @@ result), selected by intent extras or a query string. The desktop backend is pro
 client; `bench-desktop` exists only to run the Level 4c gate on desktop, because the client is a
 ten-zombie demo and cannot.
 
-**Other open items in the module set.**
+**Settled module-set decisions** (2026-10-19 and 2026-10-20; section 5, decisions D to H).
 
-- **Open (recommended: adopt `graphics-bom`).** Every module takes `api(platform(graphics-bom))`,
-  so SpartanUI 0.2 cannot pull `graphics-core` 0.2 beside a client pinned to `graphics-desktop`
-  0.1 and fail at runtime with `AbstractMethodError`. A backend factory also declares the contract
-  revision it was built for, so a mismatch fails early with a `Result`.
-- **Open (recommended: keep the split plan's artifact names, no prefix).** `assets`, `audio-core`
-  and `ui-core` are generic words and jar file names omit the group. A `spartan-` prefix would fix
-  that, but coordinates cannot change after the first Central release, so this must be settled
-  before G7.
-- **Open (recommended: final immutable classes for `Color`, `Point`, `Size`, `Rect`, not
-  interfaces).** An interface cannot promise immutability, so a renderer could see a consumer's
-  mutable point change mid-frame, and interfaces rule out compact representations. They are
-  plain `class`es, not `data class`es, with explicit `equals`, `hashCode` and `toString`; the
-  game client adapts GeneralTools and GameTools types to them.
-- **Open (recommended: adopt).** The backend SPIs carry
-  `@SubclassOptInRequired(ExperimentalGraphicsApi::class)` during 0.x, so apps call them freely
-  and anyone writing a backend opts in. At 1.0 the guard becomes `@SupportedExtension` (see 2.5).
-- **Open (recommended: adopt).** Tests live in `com.spartanlabs.testing.<level>.<production
-  package>`, selected by package filter rather than JUnit `@Tag`, because `commonTest` cannot use
-  JUnit tags.
+- **`graphics-bom` (D).** Every module takes `api(platform(graphics-bom))`. SpartanUI 0.2 then
+  cannot pull `graphics-core` 0.2 beside a client pinned to `graphics-desktop` 0.1 and fail at
+  runtime with `AbstractMethodError`. A backend factory also declares the contract revision it
+  was built for, so a mismatch fails early with a `Result`. The BOM is published by G7.
+- **Guarded backend contracts (E).** `graphics-core`'s backend contracts carry
+  `@SubclassOptInRequired(ExperimentalGraphicsApi::class)` from G4 until 1.0, so apps call them
+  freely and anyone writing a backend opts in. At 1.0 the guard becomes `@SupportedExtension`
+  (see 2.5). `AssetSource` (`assets-core`, from G4) and the audio backend (`audio-core`, from
+  G6) cannot reach `ExperimentalGraphicsApi`, because neither depends on `graphics-core`, so each
+  of those cores carries its own opt-in marker under the same rule *(settled 2026-10-20)*.
+- **Test selection (F).** Tests live in `com.spartanlabs.testing.<level>.<production package>`,
+  selected by package filter rather than JUnit `@Tag`, because `commonTest` cannot use JUnit
+  tags.
+- **Artifact names (G).** The names stay as they are (`graphics-*`, `assets-core`, `audio-*`),
+  following the `webtools-*` and `gametools-*` pattern.
+- **Basic types (H).**
+  - `Color`, `Point`, and the size and rectangle types are multiplatform GeneralTools 3.x's
+    (GeneralTools#7), used directly. `graphics-core` defines no basic types of its own, interim
+    or otherwise.
+  - G2 onward waits for GeneralTools#7; G1 can start before it.
+  - The client's adapters from GeneralTools types go away. Its adapters from GameTools' snapshot
+    types stay.
+  - The client needs GameTools and SpartanGraphics on the same GeneralTools major, which
+    GeneralTools#7 itself expects.
+  - **Risk to settle when GeneralTools#7 is planned.** 1.0 freezes these types as part of the
+    app-facing API, so their shape matters:
+    - GeneralTools' `Point` and `Dimensions` are mutable. The sealed `TwoDoubles` base has
+      `var first` and `var second` and `+=`-style operators, and GameTools relies on that.
+    - `Color` and `Square` are data classes.
+    - There is no `Size` or `Rect` by those names. The closest types are `Dimensions`, and
+      `AxisAlignedBox`, `Square` and `CenteredBox`.
+    - The components are `Double`, while the renderer's vertices are `Float`.
 
 ### 2.2 Module dependencies
 
@@ -262,6 +290,7 @@ flowchart LR
   subgraph ext[Other repositories]
     UI[SpartanUI ui-core]
     CLIENT[MyGameClient]
+    GT[GeneralTools 3.x]
   end
 
   subgraph gfx[Graphics]
@@ -275,7 +304,7 @@ flowchart LR
   end
 
   subgraph ast[Assets]
-    ASSETS[assets]
+    ASSETS[assets-core]
     MGR[asset-manager]
   end
 
@@ -304,6 +333,7 @@ flowchart LR
   CLIENT --> ADESK
 
   CORE --> ASSETS
+  CORE --> GT
   GL --> CORE
   DESK --> GL
   AND --> GL
@@ -346,9 +376,12 @@ flowchart LR
 
 Dependency direction rules, all enforced by the module graph:
 
-- Nothing in the graphics or audio families depends on GameTools, GeneralTools, WebTools or any
-  consumer.
+- Nothing in the graphics or audio families depends on GameTools, WebTools or any consumer.
+- `graphics-core` depends on multiplatform GeneralTools 3.x through `api` for its basic types, so
+  every module and consumer above it sees those types.
 - `audio-*` never depends on `graphics-*`, and `asset-manager` depends on neither.
+- `assets-core` holds contracts only. Each platform's loader lives in that platform's graphics
+  backend, and audio reads through the `AssetSource` the app passes in.
 - A backend depends on its core and (for GL backends) on `graphics-gl`; a core never depends on a
   backend. LWJGL, `android.opengl` and the DOM appear only in their own family's module, and LWJGL
   is an `implementation` dependency of the desktop modules, never `api`. The libraries declare the
@@ -459,8 +492,9 @@ What crosses each boundary:
   Programmer errors (drawing after close) stay exceptions. `CancellationException` is always
   rethrown. GPU handles are `AutoCloseable` with an idempotent `close()` that is safe after
   context loss.
-- **2D with room for 3D, reserved at the renderer and camera boundary.** `Point`, `Size`, `Rect`
-  and every shape are strictly 2D and carry no depth. The reservations are: a column-major 4x4
+- **2D with room for 3D, reserved at the renderer and camera boundary.** `Point`, the size and
+  rectangle types (all GeneralTools') and every shape are strictly 2D and carry no depth. The
+  reservations are: a column-major 4x4
   `Matrix4`; a per-layer view-projection; a thin `Camera` interface above a concrete `Camera2D`;
   frames as ordered layers, each with its own camera, clip and viewport; an integer order key
   with a stable insertion tiebreak instead of z; depth and stencil request fields, default off;
@@ -490,7 +524,7 @@ proven.
 
 | Surface | Contents |
 |---|---|
-| Basic types | `Color`, `Point`, `Size`, `Rect`, `Matrix4` |
+| Basic types | `Matrix4`, owned by this library. `Color`, `Point`, and the size and rectangle types are GeneralTools 3.x's, used directly. They freeze as part of this API, so changing the GeneralTools major is a major release here too; their mutability is a risk to settle when GeneralTools#7 is planned (2.1, decision H). |
 | Cameras | `Camera`, `Camera2D` (world/screen conversion, zoom, pan, centre on, visible region) |
 | Draw model | the closed shape set, world and screen layers, ordered layers with camera, clip and viewport, the integer order key, nested intersecting clips, outlines with the default style, culling, the texture source rectangle |
 | Picking | picking against a layer, returning `PickHit` |
@@ -564,9 +598,10 @@ graphics is `graphics-web`, a real GPU backend, as the example of record.
 **Binary and source compatibility.** JVM and Android artifacts are binary compatible within a
 major. JS (and Wasm, once published) are source compatible within a major, with additive-only
 evolution, because the Kotlin toolchain has not finalised klib binary compatibility. The promise
-is enforced, not asserted: klib and JVM ABI dumps are checked on every build, from G1 if issue #1
-adopts the ABI-validation proposal and otherwise from Phase 2, and an old-implementor fixture
-compiles a backend against the frozen contract and runs it against every later build.
+is enforced, not asserted:
+- klib and JVM ABI dumps are checked on every build, from G1 (decision T, settled 2026-10-20);
+- an old-implementor fixture compiles a backend against the frozen contract and runs it against
+  every later build.
 **Open:** the exact wording of the promise to consumers.
 
 **Platform floors (open).** minSdk 24 is recommended (about 96.6% of devices; the AndroidX
@@ -645,12 +680,12 @@ on named reference hardware.
 
 | Repository | How they meet |
 |---|---|
-| **SpartanUI** (`ui-core`) | `api(graphics-core)` through a composite build in development and Maven Central in release. SpartanUI builds elements on shapes, clip, picking, the input model and text measurement, and tests against `graphics-test`. It never depends on a backend. Because of the `api` edge, **every breaking graphics 0.x boundary pairs with a SpartanUI minor**. Text-field input, when SpartanUI wants it, uses the text-input session. SpartanUI's touch scrolling uses the Android phase's touch events and gesture recogniser. |
-| **MyGameClient** | Depends on `graphics-desktop`, `audio-desktop` and SpartanUI's `ui-core`, composite-built in development. It owns every adapter from GameTools and GeneralTools types to library types, its asset directories and names, the tile palette-to-region mapping, the visibility mask, and the position of every sound. It proves the desktop backend and the 0.1.0 audio port. It cannot prove the 4c gate. |
+| **SpartanUI** (`ui-core`) | `api(graphics-core)` through a composite build in development and Maven Central in release. SpartanUI builds elements on shapes, clip, picking, the input model and text measurement, and tests against `graphics-test`. It never depends on a backend. Through the same `api` edge it sees GeneralTools 3.x's basic types. Because of the `api` edge, **every breaking graphics 0.x boundary pairs with a SpartanUI minor**. Text-field input, when SpartanUI wants it, uses the text-input session. SpartanUI's touch scrolling uses the Android phase's touch events and gesture recogniser. |
+| **MyGameClient** | Depends on `graphics-desktop`, `audio-desktop` and SpartanUI's `ui-core`, composite-built in development. It owns the adapters from GameTools' snapshot types to library types (the libraries use GeneralTools types directly, so no GeneralTools adapter remains), its asset directories and names, the tile palette-to-region mapping, the visibility mask, and the position of every sound. It needs GameTools and SpartanGraphics on the same GeneralTools major. It proves the desktop backend and the 0.1.0 audio port. It cannot prove the 4c gate. |
 | **GameTools** | Neither side depends on the other. Every graphics phase is independent of GameTools. The client features gated on GameTools (tiled terrain, fog and minimap, event-driven positional sound, ability and item UI) are post-1.0, and the library's data-shape assumptions are: map visuals are supplied by the client, the visibility mask is built by the consumer, and event positions come from the client. |
-| **GeneralTools** | No dependency. The libraries own `Color`, `Point`, `Size` and `Rect`. Under the recommendation that follows, the client's adapters are permanent. **Open (recommended: the libraries never take GeneralTools types):** GeneralTools#7 (multiplatform) would help at most the GeneralTools half of the client's adapters, because GameTools remains JVM-only. |
+| **GeneralTools** | *(Settled 2026-10-20, decisions H and N.)* `graphics-core` depends on multiplatform GeneralTools 3.x through `api`. It uses GeneralTools' `Color`, `Point`, and size and rectangle types directly, with no interim types. G2 onward waits for GeneralTools#7. GameTools must move to the same GeneralTools major for the client, which GeneralTools#7 itself expects. How these mutable and data-class types freeze at 1.0 is a risk to settle when GeneralTools#7 is planned (2.1). |
 | **WebTools** | No dependency. WebTools is UDP only and browsers have no raw UDP socket, so a real browser client needs a browser-capable transport in WebTools and a multiplatform GameTools protocol. Neither is scheduled, and no phase depends on them: the web backend is proven by its sample app alone. |
-| **The split plan** (`docs/plans/spartan-libraries-split.md`) | The baseline this roadmap extends. Corrected on 2026-10-19 for two points: U5 (scrolling) depends on U3 and G4, not on U2 alone; and its CI and GPU statements now say no runner has a GPU, so the renderer is verified on software rasterisers and timed on reference hardware. A third correction the same day followed #1's adoption of decision A: its shape-level `Renderer` became the frame-level `RenderBackend`. One more waits for its decision: its line that the client's adapters go away when GeneralTools#7 lands (item N). SpartanUI's copy of the plan is corrected when SpartanUI's work starts. |
+| **The split plan** (`docs/plans/spartan-libraries-split.md`) | The baseline this roadmap extends. Corrected on 2026-10-19 for two points: U5 (scrolling) depends on U3 and G4, not on U2 alone; and its CI and GPU statements now say no runner has a GPU, so the renderer is verified on software rasterisers and timed on reference hardware. A third correction the same day followed #1's adoption of decision A: its shape-level `Renderer` became the frame-level `RenderBackend`. Decisions H and N (2026-10-20) settle its remaining point: the libraries take GeneralTools 3.x types directly. Its GeneralTools adapters therefore go away when GeneralTools#7 lands, and its interim basic-type interfaces are not built. SpartanUI's copy of the plan is corrected when SpartanUI's work starts. |
 
 ---
 
@@ -670,14 +705,19 @@ and Phase 3 (the game client, stages C1 to C5) belong to `SpartanLaboratories/Sp
 ### Phase 1: SpartanGraphics 0.1.0
 
 Summarised from issue #1; not re-planned here. Serves SpartanUI's stages U1 to U6 and the game
-client's stages C1 to C4. Upstream prerequisites: none.
+client's stages C1 to C4. **Upstream prerequisite:** G2 onward waits for multiplatform
+GeneralTools 3.x
+([SpartanLaboratories/GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7));
+G1 can start now.
 
 1. **G1: skeleton.** Gradle wrapper, version catalog, `build-logic`, empty `graphics-core` (KMP:
-   `jvm()` plus `js()` as the non-JVM compile check) and `graphics-desktop` (JVM), CI,
-   publishing config, coding rules.
-2. **G2: basic types and the camera.** Basic types, a 4x4 matrix type, and `Camera2D`
-   (world/screen conversion, zoom, pan, centre on, visible region) behind a thin `Camera`
-   interface.
+   `jvm()` plus `js()` as the non-JVM compile check), `graphics-desktop` (JVM) and
+   `graphics-bom`, CI, publishing config, coding rules, with test levels selected by package
+   filter, and `explicitApi()` and ABI validation from the first commit.
+2. **G2: basic types and the camera.** Basic types taken directly from multiplatform GeneralTools
+   3.x (`Color`, `Point`, and its size and rectangle types; no interim types), a 4x4 matrix
+   type, and `Camera2D` (world/screen conversion, zoom, pan, centre on, visible region) behind a
+   thin `Camera` interface. Waits for GeneralTools#7.
 3. **G3: shapes and layers.** Shapes (a textured rectangle with a texture source rectangle;
    `Text` taking a `TextStyle` and an opaque `Font`); world and screen layers as an ordered list
    of layers, each with its own camera, clip and viewport and ordered within by an integer order
@@ -689,22 +729,30 @@ client's stages C1 to C4. Upstream prerequisites: none.
    request fields; a frame-level `RenderBackend` (textures from decoded pixels, pipelines from
    descriptors that name their vertex layout, `submit` of a `RenderFrame` carrying each layer's
    view-projection, capabilities, device loss); text measurement taking a `TextStyle` and
-   returning a layout; frames and clock; input source; a new `assets-core` module with a
-   `suspend`, `Result`-returning `AssetSource` and its name grammar.
+   returning a layout; frames and clock; input source. The backend contracts are guarded by
+   `@SubclassOptInRequired(ExperimentalGraphicsApi)` until 1.0. A new `assets-core` module holds
+   a `suspend`, `Result`-returning `AssetSource` and its name grammar, guarded by its own opt-in
+   marker until 1.0. A new `graphics-test`
+   module holds the fakes (a recording `RenderBackend`, a scripted input source, a manual clock,
+   a fixed-size surface) and the conformance suites for these contracts.
 5. **G5: `graphics-desktop`.** GLFW window, one batched GL 3.3 renderer implementing
    `RenderBackend`, with scissor clipping and one view-projection uniform per layer; textures,
    bitmap-font text, classpath assets, frame loop, GLFW input, macOS/Linux handling.
 6. **G6: audio.** `audio-core` and `audio-desktop`, loading through `assets-core`, with `play`
-   returning a generation-checked `Voice` handle.
+   returning a generation-checked `Voice` handle, and the audio backend contract guarded by its
+   own opt-in marker until 1.0.
 7. **G7: release.** `0.1.0` to Maven Central, by hand.
 
 *Ships as 0.1.0. The baseline release; nothing precedes it to break.*
 
-> **Changes to Phase 1.** The shapes below belong in the Phase 1 stages. Issue #1 adopted the
-> first ten on 2026-10-19, in its scope-change comment of that date (decision A), and the stage
-> list above now carries them. The last three are still open (section 5, decisions B to J). If #1
-> adopts one, it lands in the stage named here. If not, it moves to Phase 2, and any of them that
-> changes published API joins the 0.2.0 batch of breaking changes.
+> **Changes to Phase 1.** The rows below belong in the Phase 1 stages.
+> - **The first ten rows:** issue #1 adopted them on 2026-10-19, in its scope-change comment of
+>   that date (decision A).
+> - **The module decisions (B to H):** settled on 2026-10-19 and 2026-10-20. The stage list above
+>   already shows them as drafted for #1's next scope-change comment, which is posted with the
+>   matching stage-list update.
+> - **The last two rows (decisions I and J) are still open.** If #1 adopts one, it lands in the
+>   stage named here; if not, it moves to Phase 2. Neither changes published API.
 >
 > | Shape | Stage | Status |
 > |---|---|---|
@@ -718,16 +766,16 @@ client's stages C1 to C4. Upstream prerequisites: none.
 > | Density on `Surface` | G4 | Adopted 2026-10-19 |
 > | A generation-checked `Voice` handle (at least `stop`) in the audio contract | G6 | Adopted 2026-10-19 |
 > | G1's non-JVM compile-check target: `js` (the split plan leaves the choice to G1) | G1 | Adopted 2026-10-19 |
-> | The module proposals marked open in 2.1: `assets` for `assets-core`, `graphics-test`, `graphics-bom`, guarded SPIs, test packages by level, artifact prefix, basic types as final classes | G1 to G4 | Open: decisions B to H |
+> | The module decisions: `assets-core` kept, with its loaders in the graphics backends; `graphics-bom`; test levels selected by package filter; basic types from multiplatform GeneralTools 3.x, with G2 onward waiting for GeneralTools#7; guarded backend contracts; `graphics-test`; the artifact names kept | G1, G2, G4 | Settled 2026-10-19 and 2026-10-20 (B to H); drafted for #1 |
 > | Whether `graphics-gl` is created in Phase 1 (2.1) | G1, G5 | Open: decision I |
 > | Where the Level 4c gate first lands (Phase 2, item 1, or G5) | G5 | Open: decision J |
 
 ### Phase 2: Real fonts, text input and the audio engine (0.2.0)
 
-Two independent tracks that share only the `assets` capabilities, and either may finish first.
-Every breaking change in either track waits for the boundary release, 0.2.0. Additive work that
-is ready earlier may ship as an additive 0.1.x release under the open release rule in 2.4.
-Upstream prerequisites: none. Pairs with SpartanUI 0.2.
+Two independent tracks that share only the `assets-core` capabilities, and either may finish
+first. Every breaking change in either track waits for the boundary release, 0.2.0. Additive work
+that is ready earlier may ship as an additive 0.1.x release under the open release rule in 2.4.
+Upstream prerequisites: none beyond Phase 1's. Pairs with SpartanUI 0.2.
 
 **Graphics track**
 
@@ -736,19 +784,25 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
    first item so that fonts, glyph atlases and every later feature are measured against the gate
    from their first commit. **Open (recommended: here):** the gate's natural home is with G5's
    batched renderer, which would make it part of #1. It is placed here because #1 has already
-   taken three scope changes, because the frame statistics the structural counters read are not
+   taken several scope changes, because the frame statistics the structural counters read are not
    among #1's contracts, and because the reference hardware is not yet named. The cost is that
    0.1.0's renderer ships without the gate.
-2. **The 0.2.0 batch of breaking changes.** #1 adopted the ten contract shapes on 2026-10-19, so
-   this item holds only the module proposals still open in section 5 (decisions B to H) that #1
-   does not adopt and that change published API. If #1 adopts them all, this item is empty.
+2. **The 0.2.0 batch of breaking changes: none planned.** Phase 1 carries every decided contract
+   shape and module decision:
+   - decision A, adopted on #1 on 2026-10-19;
+   - decisions B to H, settled on 2026-10-19 and 2026-10-20 and drafted for #1.
+
+   None is left for this boundary. The batch holds only a change to a 0.1.0 contract that this
+   phase's own work turns out to force, such as an audio backend contract reshaped by the voice
+   and bus model.
 3. **Real fonts (T1).** `Font`, `TextStyle`, `TextLayout`, `TextMeasurer`; a font-table reader; a
    left-to-right shaper with kerning; greedy wrapping with a replaceable line breaker; sizes; a
    runtime glyph atlas with LRU pages in common code; the `GlyphRasterizer` SPI with an
    stb_truetype desktop implementation; opt-in SDF glyphs for world-layer text that zooms. The
-   bitmap font stays as the zero-configuration default `Font`. The `DecodedImage` pixel contract
-   and a `DirectoryAssetSource` for desktop development land in `assets`. `TextShaper` is
-   Experimental.
+   bitmap font stays as the zero-configuration default `Font`. A `DirectoryAssetSource` for
+   desktop development lands in `graphics-desktop`. The `DecodedImage` pixel contract is already
+   in `assets-core` from G4, whose texture store creates textures from decoded pixels.
+   `TextShaper` is Experimental.
 4. **Text input, clipboard and cursors on desktop (part of I1).** The text-input session
    (state-mirroring, Experimental) through LWJGL's experimental GLFW IME support with a char-only
    fallback; an asynchronous, `Result`-returning clipboard; a cursor service (standard and custom
@@ -764,8 +818,10 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
    encoder padding makes seamless loops impossible.
 6. **The audio model (A2).** The `AudioBus` tree (layouts such as `ui`, `combat`, `ambient`,
    `music` under a master), streamed music through `StreamSource`, fades and crossfade, voice
-   limits and stealing. Policy lives in `audio-core`. Streaming and locator
-   capabilities are added to `assets`. `Listener` is reserved here and used in Phase 13.
+   limits and stealing. Policy lives in `audio-core`. The streaming and locator capability
+   interfaces are added to `assets-core`, and `graphics-desktop`'s sources implement them. Audio
+   reads through the `AssetSource` the app passes in. `Listener` is reserved here and used in
+   Phase 13.
 7. **The OpenAL desktop backend.** `audio-desktop` moves from the JLayer port to OpenAL Soft with
    `stb_vorbis`, keeping JLayer for MP3; `audio-test` ships the fake backend and the audio
    conformance suite. The LGPL notices land in the README and NOTICE, and the exact licence
@@ -774,9 +830,10 @@ Upstream prerequisites: none. Pairs with SpartanUI 0.2.
 Serves the game client's four sound categories (ui, combat, ambient, atmosphere) and readable text
 for both consumers.
 
-*Ships as 0.2.0. #1 adopted the ten contract shapes on 2026-10-19, including the text shape and
-the `Voice` handle, so real fonts and the audio engine build on contracts 0.1.0 already has. The
-only breaking changes left for this boundary are those in item 2. Everything else in the phase is
+*Ships as 0.2.0. No breaking change is planned. Real fonts and the audio engine build on
+contracts 0.1.0 already has, the text shape and the `Voice` handle among them, and every module
+decision lands in Phase 1. As the phase-boundary release, 0.2.0 still carries any change to a
+0.1.0 contract that the phase's own work forces (item 2). Everything else in the phase is
 additive.*
 
 ### Phase 3: Android (0.3.0)
@@ -796,16 +853,19 @@ exists beyond the sample app.
    session contract beyond desktop.
 4. **Touch and gestures (part of I1).** A pure-common gesture recogniser (tap, drag, fling, pinch),
    Experimental; it is what SpartanUI's touch scrolling will use.
-5. **`assets` on Android.** The Android-KMP plugin enters `assets`, with an `AssetManager`-backed
-   source. Play Asset Delivery is not covered; the locator capability keeps the door open.
+5. **Android asset loading.** An `AssetManager`-backed `AssetSource` in `graphics-android`. It
+   implements the locator capability (asset file descriptors) that `audio-android` reads through
+   when the app passes the source in. Play Asset Delivery is not covered; the locator capability
+   keeps the door open.
 6. **`audio-android`.** `SoundPool` for clips, `MediaPlayer` for streams, audio focus and
    lifecycle pause, written once against the contract Phase 2 settled.
 7. **`sample-android` and its gates.** The reference scene in capture mode on the emulator
    (nightly), the first Android measurement that ratifies the 5k and 10k targets, a real
    context-loss run that proves the texture rebuild recipe, and the release build that decides the
    bytecode-level question.
-8. **Build confirmation.** AGP 9 with plain `com.android.library` and the Android-KMP plugin;
-   minSdk and the bytecode level settled (2.5).
+8. **Build confirmation.** AGP 9 with plain `com.android.library`; no module needs the
+   Android-KMP plugin, since the Android loader lives in `graphics-android`. minSdk and the
+   bytecode level are settled here (2.5).
 
 *Ships as 0.3.0, with breaking changes: the contract amendments a second platform forces
 (lifecycle events, surface config, anything desktop-shaped found by the Android implementation).*
@@ -823,8 +883,10 @@ Upstream prerequisites: Phase 3. No consumer exists beyond the sample app.
    buffers). Touch arrives through Pointer Events.
 2. **Text input proven (part of I1).** A hidden-text-area session completes the proof on the third
    platform; with desktop and Android it is the evidence the session contract freezes against.
-3. **`assets` on the web.** A `fetch`-based source with a configurable base URL, and image decoding
-   through `createImageBitmap` with pinned premultiplication and colour-space options.
+3. **Web asset loading.** A `fetch`-based `AssetSource` in `graphics-web`, with a configurable
+   base URL and the locator capability (URLs that `audio-web`'s media elements stream from).
+   Image decoding goes through `createImageBitmap`, with pinned premultiplication and colour-space
+   options.
 4. **`audio-web`.** A Web Audio graph with a real `GainNode` per bus and a panner per voice; the
    autoplay unlock state and deferred-start voices in the contract; Ogg depends on Safari 18.4 or
    later.
@@ -924,7 +986,8 @@ manifest-based listing.
    and stream loaders.
 3. **The asset plugin, first release (S2).** The `gradle-plugin/` included build with the
    `manifest` task (names, sizes, content hashes, `formatVersion`), and the plugin's publication
-   route. The manifest backs web preload groups and `ListingAssetSource`, which graduates.
+   route. The manifest backs web preload groups, and it lets `graphics-web`'s fetch source
+   implement `ListingAssetSource` (from `assets-core`), which then graduates.
 
 *Ships as 1.3.0. Additive.*
 
@@ -967,7 +1030,8 @@ against it.*
 
 Upstream prerequisites: Phases 8 and 9.
 
-1. **Hot reload (S2).** `DirectoryAssetSource` implements `ChangeNotifying`; the manager
+1. **Hot reload (S2).** `graphics-desktop`'s `DirectoryAssetSource` implements `ChangeNotifying`
+   from `assets-core`; the manager
    subscribes in an explicit development configuration only, so a release build cannot enable it.
    Desktop only; Experimental.
 2. **The plugin's `fonts` task.** Baked glyph atlases (and MSDF later), consumed by the glyph
@@ -1206,24 +1270,25 @@ sections 2 and 3 point here.
 | ID | Decision | Recommendation and notes | Settle by |
 |----|----------|--------------------------|-----------|
 | A | **The Phase 1 contract shapes.** Adopt each on #1, or land it in the 0.2.0 batch. | **Settled 2026-10-19: all ten adopted** in #1's scope-change comment of that date; #1's stage list carries them (4.1). The shapes are the first ten rows of the note under Phase 1:<ul><li>the 3D seams (part of the target architecture; only their stage is open);</li><li>the frame-level `RenderBackend` and `RenderFrame`;</li><li>nested, intersecting clips;</li><li>the texture source rectangle;</li><li>Pointer-Events input with `code`-named keys;</li><li>the `TextStyle`, `Font` and `TextMeasurer` shape;</li><li>a `suspend`, `Result`-returning `AssetSource`;</li><li>density on `Surface`;</li><li>a generation-checked `Voice` at G6;</li><li>`js` as G1's compile-check target.</li></ul>The remaining Phase 1 rows (the module proposals, `graphics-gl`, the gate) are decisions B to J. | settled 2026-10-19 |
-| B | **The asset module form.** One `assets` module with its loaders in platform source sets; `assets-core` with loaders in the graphics backends (#1 today); or `assets-core` plus `assets-desktop`, `assets-android` and `assets-web`. | **One `assets` module.** It keeps an audio-only app off the graphics backend at no extra artifact. The per-family form is the fallback. | before G4 |
-| C | **Test fixtures and conformance suites.** `graphics-test` and `audio-test`, each holding fakes and the suites; separate `*-conformance` modules; or no published fakes. | **`graphics-test` and `audio-test`.** SpartanUI's and the client's tests need the fakes. The recording backend doubles as the example backend (K). | before G4 (`graphics-test`); Phase 2 (`audio-test`) |
-| D | **`graphics-bom`.** | **Adopt.** It stops a mixed-version family from failing at runtime with `AbstractMethodError`. A backend factory also declares the contract revision it was built for. | before G7 |
-| E | **Guarded SPIs in 0.x.** `@SubclassOptInRequired(ExperimentalGraphicsApi)` on the backend contracts until 1.0. | **Adopt.** Apps call the SPIs freely and backend authors opt in. At 1.0 the guard becomes `@SupportedExtension`. | before G4 |
-| F | **How test levels are selected.** Five-level packages chosen by package filter (GameTools' way) or by JUnit `@Tag` (WebTools' way). | **Package filter.** `commonTest` code cannot use JUnit tags. The five-level hierarchy itself is a constant (section 6). | G1 |
-| G | **The artifact-name prefix.** Keep `graphics-*`, `assets`, `audio-*`, or prefix them with `spartan-`. | **Keep the names**, following the `webtools-*` and `gametools-*` pattern. Coordinates cannot change after the first Maven Central release. | **before G7** |
-| H | **Basic types.** Final immutable classes, or contract interfaces with default implementations (the split plan). | **Final immutable classes, not `data` classes.** An interface cannot promise immutability, and the client adapts GeneralTools and GameTools types anyway. | before G2 |
+| B | **The asset module form.** | **Settled 2026-10-19/20: `assets-core` stays, with its platform loaders in the graphics backends**, as in #1. An audio-only app is not expected. Every asset contract lives in `assets-core`: the `AssetSource` contract and its capability interfaces, the name grammar, the failure types, `DecodedImage`, and the memory, prefix and composite sources. The loaders are spread across the backends: the classpath and directory sources in `graphics-desktop`, the `AssetManager` source in `graphics-android`, and the `fetch` source in `graphics-web`. Audio reads through the `AssetSource` the app passes in. | settled |
+| C | **Test fixtures and conformance suites.** | **Settled 2026-10-19/20: `graphics-test` from G4 and `audio-test` in Phase 2**, each holding its fakes and its conformance suites. The recording backend doubles as the example backend (K). | settled |
+| D | **`graphics-bom`.** | **Settled 2026-10-19/20: adopted, published by G7.** It stops a mixed-version family from failing at runtime with `AbstractMethodError`. A backend factory also declares the contract revision it was built for. The drafted #1 comment creates it with the G1 skeleton. | settled |
+| E | **Guarded SPIs in 0.x.** | **Settled 2026-10-19/20: adopted from G4.** `graphics-core`'s backend contracts carry `@SubclassOptInRequired(ExperimentalGraphicsApi)` until 1.0, when the guard becomes `@SupportedExtension`. `AssetSource` (`assets-core`) and the audio backend (`audio-core`) cannot reach `ExperimentalGraphicsApi`, because neither depends on `graphics-core`, so **each of those cores carries its own opt-in marker under the same rule** (settled 2026-10-20). | settled 2026-10-20 |
+| F | **How test levels are selected.** | **Settled 2026-10-19/20: by package filter, from G1.** `commonTest` code cannot use JUnit tags. The five-level hierarchy itself is a constant (section 6). | settled |
+| G | **The artifact-name prefix.** | **Settled 2026-10-19/20: the names stay as they are** (`graphics-*`, `assets-core`, `audio-*`), following the `webtools-*` and `gametools-*` pattern. | settled |
+| H | **Basic types.** | **Settled 2026-10-19/20: `Color`, `Point`, and the size and rectangle types come from multiplatform GeneralTools 3.x (GeneralTools#7), used directly**, with no interim types. G1 starts now; G2 onward waits for GeneralTools#7. The client's GeneralTools adapters go away, and the client needs GameTools and SpartanGraphics on the same GeneralTools major, which GeneralTools#7 expects. **Risk to settle when GeneralTools#7 is planned:** 1.0 freezes these types, so their shape matters.<ul><li>GeneralTools' `Point` and `Dimensions` are mutable: `TwoDoubles` has `var first`/`var second` and `+=`-style operators, and GameTools relies on that.</li><li>`Color` and `Square` are data classes.</li><li>There is no `Size` or `Rect` by those names; the closest types are `Dimensions`, `AxisAlignedBox`, `Square` and `CenteredBox`.</li><li>The components are `Double`, while the renderer's vertices are `Float`.</li></ul> | settled; the risk when GeneralTools#7 is planned |
 | I | **When `graphics-gl` is created.** | **Extract it at the start of Phase 3**, when its second consumer appears, with no public API change. Until then the renderer lives in an internal `graphics-desktop` package against `GlApi`, kept honest by a Level 2 test with a recording `GlApi`. The alternative is to create it in G1 or G5. | before G5 |
-| J | **Where the Level 4c gate first lands.** | **Phase 2, first item.** Its natural home is with G5's batched renderer, but that needs a #1 change, the contract shapes in A, and named hardware (R). The cost is that 0.1.0 ships ungated. | before G5 |
+| J | **Where the Level 4c gate first lands.** | **Phase 2, first item.** Its natural home is with G5's batched renderer, but that needs a #1 change, frame statistics that are not among #1's contracts, and named hardware (R). The cost is that 0.1.0 ships ungated. | before G5 |
 | K | **The documented example backends.** | **The recording backend in `graphics-test`, and `audio-web`.** `graphics-web` is the annotated companion reading for real GPU detail. The alternative is `graphics-web` as the graphics example of record. | Phase 5 |
 | L | **The path to 1.0.** | **0.5.0 as the last breaking batch, then 1.0.0** with the same API and the tiers promoted. The alternatives are release candidates, or going straight from 0.4.0 to 1.0.0. | Phase 5 |
 | M | **Additive releases between phase boundaries.** | **Allowed:** additive work ready before its boundary release ships as an additive 0.x.y; every breaking change waits for the boundary. The alternative is that nothing ships between boundaries. | before the first such release (Phase 2) |
-| N | **GeneralTools#7.** Do the libraries ever take GeneralTools types once GeneralTools is multiplatform? | **No.** GameTools stays JVM-only, so at most the GeneralTools half of the client's adapters would go, at the price of coupling the libraries to GeneralTools' releases. Under this answer the split plan's "adapters go away" line is corrected and the adapters are permanent. | any time; before the split plan's adapters line is corrected |
+| N | **GeneralTools#7.** | **Settled 2026-10-20, with H: the libraries take GeneralTools types.** `graphics-core` depends on GeneralTools 3.x through `api`. | settled |
 | O | **The wording of the 1.0 compatibility promise.** | The engineering is fixed: JVM and Android binary compatible within a major; JS and Wasm source compatible, with klib ABI dumps and a relink fixture. The open part is how the promise is phrased to consumers, given Kotlin has not finalised klib guarantees. | Phase 5 |
 | P | **Android floors.** minSdk, and the JVM bytecode level of modules Android consumes. | **minSdk 24** (about 96.6% of devices and the AndroidX default). The bytecode level is decided by the Android sample app's release build: keep 21 if D8 accepts it, otherwise lower only the Android-consumed modules to 17. | Phase 3 |
 | Q | **The asset plugin's publishing route.** | **The Gradle Plugin Portal, plugin id `io.github.spartanlaboratories.assets`.** The Portal requires the website and VCS properties and goes through a manual review. The alternative is Maven Central only. | Phase 8 |
 | R | **The named reference hardware** for the timing half of the 4c gate: a desktop GPU, an Android phone, a laptop. | Classes are set in 2.6. The physical machines must be ones that are available to run the gate. | Phase 2 (the gate) |
 | S | **When to publish `wasmJs`.** | Once Kotlin/Wasm is Stable and `wasmJs` passes the web gate. It is an additive variant, so before or after 1.0 is a schedule question. | any time from Phase 4 |
+| T | **When `explicitApi()` and ABI validation start.** The convention plugins turn on `explicitApi()` and the Kotlin Gradle plugin's `abiValidation()` (JVM and klib dumps), from G1 or from Phase 2. | **Settled 2026-10-20: from G1**, so every published symbol and every ABI change is visible from the first commit. The 1.0 promise (O) is enforced by these dumps. | settled 2026-10-20 |
 
 ---
 
@@ -1239,9 +1304,10 @@ sections 2 and 3 point here.
     (`testing.gating`, `testing.component`, `testing.integration`, `testing.deterministic`,
     `testing.e2e`, `testing.nonfunctional`, `testing.uat`). Each segment mirrors the production
     package beneath it.
+  - A level is selected by package filter, not by JUnit `@Tag` (decision F).
   - Shared tests use `kotlin.test` with hand-written fakes from `graphics-test` and `audio-test`.
 - **Public API.**
-  - `explicitApi()` is on everywhere.
+  - `explicitApi()` is on everywhere, from G1 (decision T).
   - Every public declaration carries Level 2 KDoc (`@param`, `@return`, `@throws`).
   - Every public surface is marked Stable Core, `@SupportedExtension` or Experimental
     (`@RequiresOptIn`). A seam graduates only after a real consumer has built against it, and the
@@ -1250,10 +1316,11 @@ sections 2 and 3 point here.
   - Contracts evolve additively by the rules in 2.4.
   - In 0.x, breaking changes ship only in a phase-boundary release. From 1.0, none ships until a
     major.
-  - JVM and klib ABI dumps are checked on every build, from the point the ABI-validation proposal
-    is adopted.
+  - JVM and klib ABI dumps are checked on every build, from G1 (decision T).
+  - The GeneralTools major that `graphics-core` exposes changes only in a SpartanGraphics major,
+    because its types are part of the public API.
 - **Releases and SpartanUI.**
-  - Every artifact shares one version.
+  - Every artifact shares one version, and `graphics-bom` keeps a consumer's artifacts on it.
   - Releases go to Maven Central by hand, signed, through `com.vanniktech.maven.publish`.
   - Each breaking 0.x boundary pairs with a SpartanUI minor.
 - **Backends.**
@@ -1277,6 +1344,7 @@ sections 2 and 3 point here.
   - Kotlin at the latest stable release when a phase starts, with `languageVersion` and
     `apiVersion` pinned for consumers.
   - Libraries target JVM 21 bytecode, subject to decision P for the modules Android consumes.
+  - `graphics-core` builds on multiplatform GeneralTools 3.x (decision H).
 - **Logging and failures.**
   - kotlin-logging, for lifecycle events only, never per frame or per sprite.
   - Expected failures are `Result` values from small open exception hierarchies.
@@ -1313,7 +1381,8 @@ which work belongs where.
 | A text-field element, when SpartanUI wants one | The text-input session, the clipboard, the cursor service, text measurement and layout |
 
 - **Dependencies:** SpartanUI depends on `graphics-core` through `api` and tests against
-  `graphics-test`. It never depends on a backend.
+  `graphics-test`. It never depends on a backend. Through the same `api` edge it sees
+  GeneralTools 3.x's basic types.
 - **Pairing:** every breaking graphics 0.x release pairs with a SpartanUI minor (the pairing table
   in section 3).
 - **The split plan:** this repository's copy was corrected on 2026-10-19 so that U5 depends on U3
@@ -1322,8 +1391,11 @@ which work belongs where.
 ### 7.2 The game client (`SpartanLabsGaming/MyGameClient`)
 
 **Belongs in the client:**
-- the adapters from GameTools and GeneralTools types to the library's types, and the snapshot
-  adapter;
+- the adapters from GameTools' snapshot types to the library's types, and the snapshot adapter.
+  No GeneralTools adapter remains, because the libraries use GeneralTools types directly
+  (decision H);
+- building on the same GeneralTools major as GameTools and SpartanGraphics, which GeneralTools#7
+  expects;
 - its asset directories and names, for example through a `PrefixAssetSource`;
 - the tile palette-to-region mapping;
 - the visibility mask's input, built from its own entity store;
@@ -1362,9 +1434,32 @@ client builds its fog-of-war mask from, not the library's mask API.
 
 ### 7.4 GeneralTools (`SpartanLaboratories/GeneralTools`)
 
-No dependency. The libraries own `Color`, `Point`, `Size` and `Rect`. Whether they ever take
-GeneralTools types once GeneralTools is multiplatform (GeneralTools#7) is open decision N. The
-recommendation is that they never do, which makes the client's adapters permanent.
+*(Settled 2026-10-20, decisions H and N.)*
+
+**The dependency:**
+- `graphics-core` depends on multiplatform GeneralTools 3.x
+  ([GeneralTools#7](https://github.com/SpartanLaboratories/GeneralTools/issues/7)) through
+  `api`.
+- It uses GeneralTools' `Color`, `Point`, and size and rectangle types directly, and defines no
+  basic types of its own, interim or otherwise.
+- G2 onward waits for GeneralTools#7; G1 does not.
+
+**Consequences for the other repositories:**
+- GameTools moves to the same GeneralTools major for the client, which GeneralTools#7 itself
+  expects.
+- The client's GeneralTools adapters go away.
+
+**Risk to settle when GeneralTools#7 is planned.** SpartanGraphics 1.0 freezes these types as
+part of its public API, so their shape matters:
+- `Point` and `Dimensions` are mutable. The sealed `TwoDoubles` base has `var first` and
+  `var second` and `+=`-style operators, and GameTools relies on that.
+- `Color` and `Square` are data classes.
+- No types are named `Size` or `Rect`. The closest are `Dimensions`, `AxisAlignedBox`, `Square`
+  and `CenteredBox`.
+- The components are `Double`, while the renderer's vertices are `Float`.
+
+A GeneralTools major change exposed through `graphics-core` is a SpartanGraphics major change
+too.
 
 ### 7.5 WebTools (`SpartanLaboratories/WebTools`)
 
@@ -1386,8 +1481,10 @@ repositories at that point:
   reference hardware.
 - Its shape-level `Renderer` became the frame-level `RenderBackend`, once #1 adopted decision A.
 
-**One correction waits for its decision:** its line that the client's adapters go away when
-GeneralTools#7 lands is corrected under decision N.
+**Settled by decisions H and N (2026-10-20):** the libraries take GeneralTools 3.x types
+directly. The split plan's GeneralTools adapters therefore do go away when GeneralTools#7 lands,
+and its interim basic-type interfaces (`Color`, `Point`, `Size` and `Rect` as contract
+interfaces) are not built.
 
 The items on its "Not in this plan" list belong in four places:
 - this repository's items (the Android and web backends, real fonts, the further shapes and

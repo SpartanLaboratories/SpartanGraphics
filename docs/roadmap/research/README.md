@@ -823,6 +823,15 @@ The user answered on 2026-10-19. The answers are in 3.5.
 - **Reference hardware** for the timing half of the 4c gate.
 - **When to publish `wasmJs`:** before or after 1.0, once Kotlin/Wasm is Stable.
 
+*(2026-10-20:)* The roadmap's section 5 now records these decisions as they are settled. Two
+answers there depart from this research's recommendation:
+- the basic types are multiplatform GeneralTools 3.x's, used directly, rather than final classes
+  owned by the library (decisions H and N);
+- `assets-core` keeps the asset contracts, with the platform loaders in the graphics backends,
+  rather than one `assets` module (decision B).
+
+The roadmap records the risks of the GeneralTools types.
+
 ### 3.5 Answers at the stage-2 halt (binding)
 
 The user's answers of 2026-10-19, one line each. They bind stage 3 exactly as Part 1.1 does.
