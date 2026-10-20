@@ -273,7 +273,7 @@ LWJGL covers all three OSes (x64 and arm64, including Apple Silicon). The Kotlin
 - **macOS, main thread:** GLFW must run on the first thread (`-XstartOnFirstThread`). The app's launcher already handles this.
 - **macOS, OpenGL:** Apple has deprecated OpenGL and frozen it at 4.1. Our 3.3 core works today, but a future macOS could need a Metal (or MoltenVK) backend.
 - **Linux, Wayland:** apps can't position their own windows there, so the current trick of moving a borderless window onto the primary monitor becomes GLFW's windowed full-screen mode.
-- **Testing:** CI compiles on all three, but no CI runner can open a window. Releases are run by hand on Windows only; macOS and Linux are "should work, untested."
+- **Testing:** CI compiles on all three. No CI runner has a GPU, but Linux runners can test the shared GL renderer on a software rasteriser (llvmpipe under Xvfb); the Linux desktop backend itself (windowing, input, packaging) stays untested. Releases are run by hand on Windows only; macOS and Linux are "should work, untested." *(Corrected 2026-10-19; see the roadmap, `docs/roadmap/vision-and-roadmap.md` §2.6.)*
 
 ## Code mapping
 
@@ -321,7 +321,7 @@ Each repo:
 - **Tests:** shared tests use `kotlin.test` with hand-written fakes. JUnit 5 and MockK are still used in JVM-only tests.
 - **Artifacts:** `graphics-core`, `graphics-desktop`, `assets-core`, `audio-core`, `audio-desktop` and `ui-core`.
 - **Publishing:** copies GeneralTools' setup: the `com.vanniktech.maven.publish` plugin with Central Portal and signing, released by hand with no publish workflow.
-- **CI:** GitHub Actions. A `windows-latest` job runs the full build and tests; `macos-latest` and `ubuntu-latest` jobs compile only.
+- **CI:** GitHub Actions. A `windows-latest` job runs the full build and every test that doesn't open a GL context; an `ubuntu-latest` job compiles and runs the GL renderer's tests on llvmpipe under Xvfb; a `macos-latest` job compiles only. *(Corrected 2026-10-19; see the roadmap §2.6.)*
 - **Coding rules:** `.aiassistant/rules` is copied into each new repo, with the logging and testing rules adjusted as above.
 - **Branches:** one per PR, named `<type>/<pr-id>-<slug>` (e.g. `feature/g1-build-skeleton`). This matches the `feature/…` and `chore/…` branches these repos already use.
 
@@ -362,7 +362,7 @@ Rules for every PR:
 | **U2** | Element tree: basic elements on shapes (with their opt-in outlines), `Group` with runtime add/remove and opt-in clipping, fractional positioning, aspect lock, conversion to shapes; layout tests from `UiTest` ported | U1, G3 |
 | **U3** | Dispatch and callbacks: pointer routing, opt-in pass-through, hover, triggers, guard veto, multiple callbacks with context and removable handles, the unhandled-input sink, scene and stage key binding tables; dispatch tests ported | U2, G4 |
 | **U4** | Built-in elements: `Label`, `Panel`, `Button` (with the `shortcut` shorthand), `StatBar`, `Image`; `ButtonTest`, `StatBarTest`, `PortraitTest` ported | U3 |
-| **U5** | Opt-in scrolling for `Group` | U2 |
+| **U5** | Opt-in scrolling for `Group` | U2, U3, G4 *(U3 and G4 added 2026-10-19: scrolling needs dispatch and input)* |
 | **U6** | Release `0.1.0` (manual, by you) | U1–U5, G7 |
 
 ### Phase 3: game client (this repo)
@@ -393,7 +393,7 @@ These were deferred, or belong to another repo. Each needs its own plan when its
 
 - **Composite builds with KMP:** Gradle substitutes included KMP builds in modern Gradle and Kotlin, but this path has had rough edges. U1 and C1 prove it early, before anything depends on it.
 - **No GPU in CI or in cloud sessions:**
-  - `graphics-desktop` can be compiled but not run there, as is true of `Window` today.
+  - `graphics-desktop` can't run on a GPU there, as is true of `Window` today, but on Linux runners its GL renderer can be tested on a software rasteriser (llvmpipe under Xvfb). *(Corrected 2026-10-19.)*
   - The pure logic (camera, picking, outlines, layout, dispatch, key tables) stays in common code and gets full unit tests.
   - The renderer is verified by running the game client by hand.
 - **JDK 23 for the game client:** GameTools needs a JVM 23 runtime. This cloud environment has only JDK 21, and the toolchain download is blocked, so the game client can't build here until JDK 23 is provided (setup script or environment). The libraries on 21 aren't affected.
