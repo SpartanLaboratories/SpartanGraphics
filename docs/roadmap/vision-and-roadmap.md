@@ -1107,8 +1107,9 @@ Findings: [`web-target-kotlin-js-vs-wasm.md`](research/web-target-kotlin-js-vs-w
 
 ### 4.4 A frame-level backend contract
 
-The split plan's shape-level `Renderer` ("draw one frame of shapes and their outlines") is the
-cheapest first backend and the most expensive frozen contract. It fails in three ways:
+The split plan's original shape-level `Renderer` ("draw one frame of shapes and their outlines"),
+replaced on 2026-10-19, was the cheapest first backend and the most expensive frozen contract. It
+fails in three ways:
 - Every new shape the roadmap schedules would become an obligation on every backend, third-party
   ones included.
 - Batching and clip splitting would be reimplemented per backend, untestable without a GPU.
