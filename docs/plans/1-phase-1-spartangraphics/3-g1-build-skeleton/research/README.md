@@ -34,7 +34,10 @@ findings live in the file it names.
 
 **Build**
 
-- A Gradle 9 wrapper: the newest 9.x inside every applied plugin's documented range.
+- The Gradle wrapper 9.8.2, `-bin` distribution, with its `distributionSha256Sum`. 9.8.1 is the
+  first release that patches three high-severity Gradle advisories covering 9.0.0 to 9.8.0. 9.8.2
+  is one minor past the Kotlin Gradle plugin 2.4.21's "fully supported" range, which permits newer
+  Gradle.
 - A version catalog, `gradle/libs.versions.toml`.
 - A private `build-logic` included build with convention plugins for a KMP library module, a JVM
   library module and publishing.
@@ -82,9 +85,16 @@ findings live in the file it names.
   GL tests on Linux arrive with the renderer in a later stage.
 - A release workflow creates the GitHub Release from a pushed `v`-prefixed tag and publishes
   nothing.
-- `main` is protected: changes arrive by pull request, and G1's CI checks must pass before a
-  merge. Applying this is a GitHub settings step, with the checks and settings named exactly, and
-  it is applied only once the maintainer confirms it.
+- `main` is protected, administrators included: changes arrive by pull request, and G1's CI checks
+  must pass before a merge.
+- Beside the protection, the repository settings are aligned:
+  - merge commits only, with head branches deleted on merge;
+  - merge-commit text taken from the pull request's title and body;
+  - a read-only default workflow token.
+
+  Applying the protection and these settings is a GitHub settings step, with the checks and
+  settings named exactly. It is applied only once the maintainer confirms it.
+- The workflows pin actions by major tag.
 - Repository files:
   - `.gitignore`, whose current `*.jar` rule would leave the Gradle wrapper jar uncommitted;
   - `.gitattributes`;
@@ -512,9 +522,7 @@ All hold.
 ## Summary
 
 Each topic gives what was found, the recommended approach with the evidence behind it, where
-sources disagree and which view holds, and the options that do not fit. Four trade-offs need the
-maintainer's call; they are under "Considerations" at the end, and the design reads whole with
-their recommended options.
+sources disagree and which view holds, and the options that do not fit.
 
 ### Build structure: `build-logic`, the catalog and plugin loading
 
@@ -604,9 +612,29 @@ their recommended options.
     `kotlin-test-junit5` calls, so moving to it is one catalog line.
   - **The JUnit Platform launcher** is declared explicitly, which Gradle 9 requires.
   - **`kotlin-test`** follows the Kotlin plugin through `kotlin("test")` and has no catalog entry.
-- **The wrapper** is the open trade-off in Consideration 1: Gradle 9.7.1 or 9.8.2. Either way the
-  properties file carries `distributionSha256Sum` with the value Gradle publishes, and the `-bin`
-  distribution is used.
+- **The wrapper is Gradle 9.8.2,** `-bin`, with
+  `distributionSha256Sum=21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`, the
+  value Gradle publishes.
+  - **The advisories it closes.** Three high-severity Gradle advisories published 2026-10-07 affect
+    9.0.0 to 9.8.0, and 9.8.1 is the first patched release; no 9.7.x fix exists.
+    - GHSA-mvvg-497x-hmj8: the worker-to-daemon channel deserialises untrusted objects.
+    - GHSA-xwqc-3h47-hg64: the client-to-daemon channel deserialises before authentication.
+    - GHSA-j5m7-59rp-24f5: a repository that fails its TLS handshake is not disabled, so resolution
+      can fall through to another repository.
+
+    A compromised daemon runs with the privileges of the account running the build and can read
+    the secrets on disk, which at G7 include the signing key and the Central Portal token.
+  - **The compatibility cost.** 9.8.2 is one minor past KGP 2.4.21's "fully supported" range, which
+    ends at 9.7.0. KGP permits newer Gradle "but ... you might encounter deprecation warnings or
+    some new features might not work", and it checks only a minimum version.
+    - Dokka 2.2.0 prints one deprecation warning on 9.8 (`Configuration.setVisible`, scheduled for
+      removal in Gradle 11).
+    - vanniktech's own development branch builds on Gradle 9.8.1 with KGP 2.4.21.
+  - **The fallback** is Gradle 9.7.1 (`-bin`, checksum
+    `acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a`), the patch of KGP's last
+    fully supported minor. It is a three-line change in `gradle-wrapper.properties` if the first
+    run shows an incompatibility.
+  - Evidence: `toolchain-versions-and-pins.md` F1–F3, claims 1–7, 11 and 12.
 - **The floor, the same three settings in both module kinds:**
   - `languageVersion` and `apiVersion` 2.2 at the `kotlin {}` extension level;
   - an explicit `api(kotlin-stdlib:2.2.0)` from the catalog, in `commonMain` for `graphics-core`
@@ -842,8 +870,14 @@ their recommended options.
       proprietary component.
     - `setup-gradle` validates the wrapper itself, against Gradle's published checksums.
     - The current releases are `actions/checkout` v7.0.1, `actions/setup-java` v6.1.0,
-      `gradle/actions` v6.4.0 and `actions/upload-artifact` v7.0.2; how they are pinned is
-      Consideration 4.
+      `gradle/actions` v6.4.0 and `actions/upload-artifact` v7.0.2. They are pinned by major tag
+      (`@v7`, `@v6`, `@v6`, `@v7`), so patch and security releases arrive without edits.
+      - The exposure a moved tag would bring is small. Every job that runs an action holds a
+        read-only token and no secret, and the one job with a write token runs no action.
+      - SHA pins would go stale with nothing to bump them.
+      - No SHA-pinning requirement is set on the repository: with it, "all actions must be pinned
+        to a full-length commit SHA to be used", including "actions authored by GitHub" (GitHub
+        Docs, `data/reusables/actions/actions-use-policy-settings.md`).
   - **Gradle in CI.**
     - On CI the nested TestKit builds use the runner's Gradle user home, so the job's cache covers
       them. Locally they keep TestKit's isolated home, because the runner has no user-level
@@ -880,14 +914,24 @@ their recommended options.
     - conversations must be resolved;
     - force pushes and deletion are blocked;
     - linear history is off, because it would forbid merge commits;
-    - administrators: Consideration 2.
+    - administrators are included (`enforce_admins: true`). With one maintainer, an exempt
+      administrator would leave the rule advisory. A pull request stuck on a check that cannot
+      pass waits until admin enforcement is removed and restored: one `DELETE` and one `POST` on
+      `.../protection/enforce_admins`, given in `ci-release-and-branch-protection.md` §6.4.3.
   - **Order of operations:**
     1. Commit `gradlew` as `100755`.
     2. Open the G1 pull request; its run creates the four check names. Compare them with the
        payload, character for character.
     3. Read the first runs: the job durations, whether the compile jobs set up Node.js, and any
        `FROM-CACHE` on the `build-logic` test tasks.
-    4. Apply the repository settings the maintainer confirms (Consideration 3).
+    4. Once the maintainer confirms them, apply the repository settings in two commands:
+       - `PATCH repos/SpartanLaboratories/SpartanGraphics` with `allow_squash_merge=false`,
+         `allow_rebase_merge=false`, `delete_branch_on_merge=true`, `merge_commit_title=PR_TITLE`
+         and `merge_commit_message=PR_BODY`. Merge commits stay enabled.
+       - `PUT .../actions/permissions/workflow` with `default_workflow_permissions=read`.
+
+       Applying them before the merge gives the G1 merge the baseline's commit text and deletes its
+       branch.
     5. Merge.
     6. Within seven days of a green run, apply the protection once the maintainer confirms it.
     7. Prove it: a trivial pull request shows the four checks as required, and a direct push is
@@ -900,7 +944,7 @@ their recommended options.
 
 | Point | Views | What holds, and why |
 | --- | --- | --- |
-| The wrapper line | 9.7.1 sits inside KGP 2.4.21's fully supported range; 9.8.1 and later fix three high-severity advisories that cover 9.0.0 to 9.8.0 | Open: Consideration 1 |
+| The wrapper line | 9.7.1 sits inside KGP 2.4.21's fully supported range; 9.8.1 and later fix three high-severity advisories that cover 9.0.0 to 9.8.0 | 9.8.2: KGP permits newer Gradle, and the cost on the evidence is one deprecation warning, against advisories on the machine that holds the release secrets; 9.7.1 is the three-line fallback |
 | JUnit line | 6.1.3 as the latest stable (toolchain findings); 5.x as named by the testing requirement (testing findings) | 5.14.4: the line named by the requirement and the one `kotlin-test-junit5` is tested against; 6.x is a one-line move |
 | Guarding the Gradle 9.0.0 floor | a permanent CI job compiling `build-logic` on 9.0.0 (toolchain C3); a TestKit consumer test (testing findings) | The Level 4b test: it also proves substitution, the stdlib pin and the JVM-attribute failure |
 | Where Dokka is applied | unconditionally in the publishing convention (build-logic §6.9); only for the Kotlin kinds (Dokka §6.3) | Only for the Kotlin kinds: the BOM must not receive Dokka |
@@ -908,83 +952,7 @@ their recommended options.
 | Keeping heavy tests honest | `outputs.upToDateWhen { false }` (testing §6.4); also `doNotCacheIf` (CI F16) | Both: `Test` is cacheable and the build cache is on |
 | Isolated Projects | nothing blocks it later (build-logic F7); KGP's js target blocks it (ABI F2) | The js target blocks it (KT-80311); this build adds no violation of its own |
 | ABI dump comparison | byte-for-byte (GeneralTools' `.gitattributes` comment); line by line (ABI F5) | Line by line, read in `AbiToolsImpl.filesDiff` at `v2.4.21` |
-| Pinning actions | full SHAs (CI findings, GitHub's guidance, Okio); major tags (Coil, MyGameTools, GeneralTools) | Open: Consideration 4 |
-
-### Considerations
-
-These four calls are the maintainer's. Each lists its options and a recommendation; the design
-above uses the recommended option.
-
-**1. The Gradle wrapper line.** The newest 9.x inside every applied plugin's documented range is
-9.7.1. Three high-severity Gradle advisories, all published 2026-10-07, affect 9.0.0 to 9.8.0, and
-only 9.8.1 and later are patched; no 9.7.x fix exists:
-
-- GHSA-mvvg-497x-hmj8: the worker-to-daemon channel deserialises untrusted objects;
-- GHSA-xwqc-3h47-hg64: the client-to-daemon channel deserialises before authentication;
-- GHSA-j5m7-59rp-24f5: a repository that fails its TLS handshake is not disabled, so resolution can
-  fall through to another repository.
-
-A compromised daemon runs with the privileges of the account running the build and can read the secrets on disk, which at
-G7 include the signing key and the Central Portal token.
-
-- *(a) 9.7.1* (checksum `acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a`):
-  - It is inside KGP 2.4.21's "fully supported" range, which ends at 9.7.0; 9.7.1 is the patch that
-    replaces 9.7.0.
-  - Ktor 3.6.0, Coil 3.6.3 and MyGameTools run it with Dokka 2.2.0 and vanniktech.
-  - It carries the three advisories until the wrapper moves.
-- *(b) 9.8.2* (checksum `21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`):
-  - It is patched.
-  - It is one minor past KGP's "fully supported" label. KGP permits newer Gradle "but ... you might
-    encounter deprecation warnings or some new features might not work", and it checks only a
-    minimum.
-  - Dokka 2.2.0 prints one deprecation warning on it (`Configuration.setVisible`).
-  - vanniktech's own unreleased `main` builds on Gradle 9.8.1 with KGP 2.4.21.
-  - 9.8.2 itself is one day old.
-
-Recommendation: **(b)**. The cost on the evidence is a deprecation warning, while the advisories
-expose the machine that will hold the release secrets. If the first CI run shows an
-incompatibility, moving to (a) is a three-line change to `gradle-wrapper.properties`, and nothing
-else in this research changes.
-
-**2. Whether the protection of `main` binds administrators.**
-
-- *(a) `enforce_admins: true`.* The rule binds the only person who pushes, which is what "the
-  default branch never receives direct commits" asks. It costs the override: a pull request whose
-  required check cannot pass, for example after a job rename, waits until `enforce_admins` is
-  removed and restored (one `DELETE` and one `POST`, documented).
-- *(b) `enforce_admins: false`*, as MyGameTools, Okio, Ktor and kotlinx-io set it. The maintainer
-  can still push to `main` and merge past a failing check, so with one maintainer the rule is
-  advisory.
-
-Recommendation: **(a)**.
-
-**3. Which repository settings are applied beside the protection.** Each is an independent
-command.
-
-- *B: merge strategy.* `allow_squash_merge=false`, `allow_rebase_merge=false`,
-  `delete_branch_on_merge=true`, `merge_commit_title=PR_TITLE` and `merge_commit_message=PR_BODY`.
-  This is the organisation's baseline, with merge commits only and the Conventional-Commit pull
-  request title as the merge subject. Today all three merge methods are enabled.
-- *C: workflow token.* `default_workflow_permissions=read`. This is hardening: both workflows
-  declare their own permissions, and the default is `write` today.
-- *D: `sha_pinning_required=true`.* Only meaningful with SHA pinning (Consideration 4).
-
-Recommendation: **B and C**.
-
-**4. How the workflows pin actions.** The four actions are GitHub's and Gradle's own.
-
-- *(a) Full commit SHAs with the version in a comment.* This follows GitHub's hardening guidance and
-  Okio, and gives immutable, reviewable pins. With no `dependabot.yml`, they are bumped by hand with
-  a documented command.
-- *(b) Major tags* (`@v7`, `@v6`), as Coil, MyGameTools and GeneralTools use. Patch and security
-  releases arrive without edits.
-
-GitHub's guidance accepts tag pins only for creators you trust. A moved tag would run with a token
-that is read-only in every job that runs an action, in jobs that hold no secret, and the one job
-with a write token runs no action.
-
-Recommendation: **(b)**. The immutability gain is small for this threat surface, and the pins
-would otherwise go stale with nothing to bump them.
+| Pinning actions | full SHAs (CI findings, GitHub's guidance, Okio); major tags (Coil, MyGameTools, GeneralTools) | Major tags: the actions are GitHub's and Gradle's own, every action-running job holds a read-only token and no secret, and SHA pins would go stale with nothing to bump them |
 
 ### Known gaps
 
@@ -1010,6 +978,6 @@ are the measurements. The items they settle:
   case, and the findings give the fallback body.
 - **Timings,** above all the TestKit job on `windows-latest`.
 - **Gradle 9.8.2 with KGP 2.4.21, Dokka 2.2.0 and vanniktech 0.37.0** has run only in vanniktech's
-  own build; this build's first run is the check, if option (b) of Consideration 1 is taken.
+  own build. This build's first run is the check, and Gradle 9.7.1 is the fallback.
 - **A release-version build without signing keys.** `./gradlew build -Pversion=0.1.0` is run once
   locally before G7.
