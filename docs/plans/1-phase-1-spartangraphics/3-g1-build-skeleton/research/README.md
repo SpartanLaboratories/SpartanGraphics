@@ -34,10 +34,12 @@ findings live in the file it names.
 
 **Build**
 
-- The Gradle wrapper 9.8.2, `-bin` distribution, with its `distributionSha256Sum`. 9.8.1 is the
-  first release that patches three high-severity Gradle advisories covering 9.0.0 to 9.8.0. 9.8.2
-  is one minor past the Kotlin Gradle plugin 2.4.21's "fully supported" range, which permits newer
-  Gradle.
+- The Gradle wrapper 9.8.2, `-bin` distribution, with its `distributionSha256Sum`.
+  - 9.8.1 is the first public release that patches three high-severity Gradle advisories covering
+    9.0.0 to 9.8.0. Fixed 9.7.x and older-line releases exist only through Gradle's paid Security
+    Subscription.
+  - 9.8.2 is one minor past the Kotlin Gradle plugin 2.4.21's "fully supported" range, which
+    permits newer Gradle.
 - A version catalog, `gradle/libs.versions.toml`.
 - A private `build-logic` included build with convention plugins for a KMP library module, a JVM
   library module and publishing.
@@ -55,10 +57,19 @@ findings live in the file it names.
 
 **Tests**
 
-- Every test sits in `com.spartanlabs.testing.<level>.<production package>`, one level per package
-  segment: `gating`, `component`, `integration`, `deterministic`, `e2e`, `nonfunctional`, `uat`.
-- `-PtestLevel=<level>[,<level>]` adds that package filter to every test task. With the property
-  unset, `check` runs every level on every target.
+- **Level 1 is a process, not a test package.**
+  - It is the pre-commit run plus each plan's manual checks, with the outcomes recorded in the
+    pull request's description.
+  - Gating tests are temporary by definition ("active until the WIP is finished"), so there is no
+    `testing.gating` folder.
+- **Every persistent test** sits in `com.spartanlabs.testing.<level>.<production package>`, one
+  level per package segment: `component`, `integration`, `deterministic`, `e2e`, `nonfunctional`,
+  `uat`.
+- **Level 5 (`uat`) is used selectively,** for systems a downstream developer using the library
+  sees directly: public authoring APIs, installable systems and lookup `Result`s. Internal
+  mechanics get no Level 5.
+- **`-PtestLevel=<level>[,<level>]`** takes those six names and adds the package filter to every
+  test task. With the property unset, `check` runs every level on every target.
 - `kotlin.test` in common code. JUnit 5 and MockK appear only in JVM-only tests, and logback is
   the JVM test logging backend.
 
@@ -436,12 +447,25 @@ gives vanniktech 0.37.0's class metadata as 2.0. Every one of the 106 classes in
 `gradle-maven-publish-plugin-0.37.0.jar` carries metadata 2.2.0, as `toolchain-versions-and-pins.md`
 claim 16 states. The composite-consumer floor below is reasoned from 2.2.0, so nothing changes.
 
+**One statement holds only for public releases.** `toolchain-versions-and-pins.md` F3 says "No
+9.7.2 or 9.6.2 exists". That is true of public releases only. Each advisory's Patches table lists
+two kinds of fix:
+
+- OSS: 9.8.1 and 8.14.6;
+- Gradle's paid Security Subscription: 9.7.2, 9.6.2, 9.5.2, 9.4.2, 9.3.2, 9.2.2, and 9.1.1 or 9.1.2
+  depending on the advisory.
+
+The advisories' patched-versions field names only the two OSS releases. The wrapper choice is
+unchanged: this build uses public distributions, and 9.8.1 is the first public fix.
+
 **Currency.** These states changed after the findings were written or are worth knowing; no
 verdict changes.
 
-- **Gradle.** Gradle 9.8.2 (2026-10-19) is the latest release, and no 9.7.2 exists. The three
-  advisories GHSA-mvvg-497x-hmj8, GHSA-xwqc-3h47-hg64 and GHSA-j5m7-59rp-24f5 are unchanged:
-  severity high, affecting "< 8.14.6, 9.0.0 to 9.8.0", patched in 8.14.6 and 9.8.1.
+- **Gradle.** Gradle 9.8.2 (2026-10-19) is the latest public release, and no public 9.7.2 exists.
+  The three advisories GHSA-mvvg-497x-hmj8, GHSA-xwqc-3h47-hg64 and GHSA-j5m7-59rp-24f5 are
+  unchanged: severity high, affecting "< 8.14.6, 9.0.0 to 9.8.0". The public fixes are 8.14.6 and
+  9.8.1; the fixed releases of older 9.x lines are Security Subscription releases, as the
+  correction above records.
 - **Kotlin and the plugins.**
   - The Kotlin documentation's last compatibility row is still "2.4.20–2.4.21 | 7.6.3–9.7.0 |
     8.5.2–9.3.1".
@@ -616,7 +640,8 @@ sources disagree and which view holds, and the options that do not fit.
   `distributionSha256Sum=21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`, the
   value Gradle publishes.
   - **The advisories it closes.** Three high-severity Gradle advisories published 2026-10-07 affect
-    9.0.0 to 9.8.0, and 9.8.1 is the first patched release; no 9.7.x fix exists.
+    9.0.0 to 9.8.0, and 9.8.1 is the first patched public release. Fixed 9.7.x releases exist only
+    through Gradle's paid Security Subscription, which this build does not use.
     - GHSA-mvvg-497x-hmj8: the worker-to-daemon channel deserialises untrusted objects.
     - GHSA-xwqc-3h47-hg64: the client-to-daemon channel deserialises before authentication.
     - GHSA-j5m7-59rp-24f5: a repository that fails its TLS handshake is not disabled, so resolution
@@ -632,8 +657,8 @@ sources disagree and which view holds, and the options that do not fit.
     - vanniktech's own development branch builds on Gradle 9.8.1 with KGP 2.4.21.
   - **The fallback** is Gradle 9.7.1 (`-bin`, checksum
     `acd53f1edaf02f1a8ff99879f8a34b302661a057d9b063ae9e35b552f804d20a`), the patch of KGP's last
-    fully supported minor. It is a three-line change in `gradle-wrapper.properties` if the first
-    run shows an incompatibility.
+    fully supported minor. It is a two-line change in `gradle-wrapper.properties`
+    (`distributionUrl` and `distributionSha256Sum`) if the first run shows an incompatibility.
   - Evidence: `toolchain-versions-and-pins.md` F1–F3, claims 1–7, 11 and 12.
 - **The floor, the same three settings in both module kinds:**
   - `languageVersion` and `apiVersion` 2.2 at the `kotlin {}` extension level;
@@ -792,40 +817,61 @@ sources disagree and which view holds, and the options that do not fit.
 - **Recommended.**
   - **The test source set.** Every test lives in `build-logic/src/test/kotlin/` under
     `com.spartanlabs.testing.<level>.graphics.build`, one class per file, 17 classes in all.
-  - **Level 1.**
-    - The real-build guards inside every `check`: `checkKotlinAbi`, `verifyDokkaSourceSets`,
+  - **Level 1 is a process.**
+    - **The pre-commit run** is `./gradlew check :build-logic:test -PtestLevel=component,deterministic`.
+      Its `check` runs the real-build guards: `checkKotlinAbi`, `verifyDokkaSourceSets`,
       `verifyBomCoverage`, and the strict explicit-API compile.
-    - `RepositoryContractTest`, over the committed dumps, the `.gitattributes` anchor, the
-      `include(...)` list against the module directories, and `group` and `version` in
-      `gradle.properties`.
+    - **The manual checks** come with it, and their outcomes go in the pull request's description.
+      G1's are:
+      - the first run of the hoist negative control;
+      - `build-logic` assembled on Gradle 9.0.0;
+      - copies of the real client, built on its own wrapper and on this build's;
+      - an Isolated Projects diagnostic;
+      - a `--warning-mode all` run;
+      - a `core.autocrlf` check on the maintainer's machine;
+      - a look at the rendered site;
+      - an IDE import.
+
+      The `--warning-mode all` run repeats at every wrapper or plugin bump. The js filter execution
+      runs when the first `commonTest` class lands in G2. Both are Level 1 checks of those later
+      changes.
+    - **`gating` is not a selectable `-PtestLevel` name.** It would select nothing, so
+      `-PtestLevel=gating` fails with a message that names the six levels and points to the
+      Level 1 definition in `CONTRIBUTING.md`.
   - **Level 4a:** pure functions. `parseTestLevels`, `bomCoverageProblems` and the floor parser,
     which returns `Result<KotlinVersion>`.
   - **Level 2:** the task classes, `configureTestLevels` and `Catalog.kt`, with `ProjectBuilder`,
     `@TempDir` and MockK.
-  - **Level 3:** seven Gradle TestKit classes against a mutated **copy of the real build**: explicit
-    API, the ABI guard, the test-level filter, the compiler contract, the published metadata, the
-    Dokka guard with the negative control that removes the root hoist, and BOM coverage.
+  - **Level 3.**
+    - **`RepositoryContractTest`** checks the committed dumps, the `.gitattributes` anchor, the
+      `include(...)` list against the module directories, `group` and `version` in
+      `gradle.properties`, and that no source set holds a `testing/gating` package.
+      - It belongs at Level 3 because it reads the real repository's files, so it is no isolated
+        component test.
+      - What it checks is the contract between the committed files and the tools that consume
+        them: Gradle's settings and ABI tasks, and git's attributes.
+      - It runs in-process.
+    - **Seven Gradle TestKit classes** run against a mutated **copy of the real build**: explicit
+      API, the ABI guard, the test-level filter, the compiler contract, the published metadata, the
+      Dokka guard with the negative control that removes the root hoist, and BOM coverage.
   - **Level 4b:** `CompositeConsumerFloorTest`, a generated Kotlin 2.1.20 consumer on Gradle 9.0.0
     that includes the copy.
   - **Level 4c:** `ConfigurationCacheTest`, a store-and-reuse pair. Gradle prescribes two runs.
-  - **Level 5:** ten recorded manual steps, M1 to M10:
-    - the first run of the hoist negative control;
-    - `build-logic` assembled on Gradle 9.0.0;
-    - copies of the real client on both wrappers;
-    - an Isolated Projects diagnostic;
-    - `--warning-mode all` at each bump;
-    - the js filter execution at G2;
-    - a `core.autocrlf` check on the maintainer's machine;
-    - a look at the rendered site;
-    - an IDE import.
+  - **Level 5: none in G1.**
+    - Level 5 covers what a downstream developer sees directly: public authoring APIs, installable
+      systems and lookup `Result`s.
+    - G1's public API is empty. What a consumer meets in G1 is packaging: the coordinates, the BOM
+      and the composite include. Levels 3 and 4b decide its behaviour mechanically.
+    - `uat` stays a selectable level for the first authoring API.
   - Evidence: [`testing-build-logic.md`](testing-build-logic.md) §6, claims 1, 2, 4–16.
 - **No `withPluginClasspath()`.** TestKit's injected classpath loads every plugin from one
   classloader. The arrangement the root hoist creates would then always hold, and the negative
   control could never bite.
 - **Task wiring.**
-  - `:build-logic:test` (Levels 1, 2 and 4a) runs on `:build-logic:check`.
-  - `integrationTest`, `e2eTest` and `nonfunctionalTest` are separate `Test` tasks selected by
-    package, kept off `check`, never up to date, and **never cached**.
+  - `:build-logic:test` (Levels 2 and 4a) runs on `:build-logic:check`.
+  - `integrationTest` (Level 3, including the in-process `RepositoryContractTest`), `e2eTest` and
+    `nonfunctionalTest` are separate `Test` tasks selected by package, kept off `check`, never up to
+    date, and **never cached**.
   - `Test` is a `@CacheableTask`, and the repository turns the build cache on, so both the heavy
     tasks and `:build-logic:test` carry `outputs.doNotCacheIf(...)`. Otherwise a run could be
     loaded from the cache without testing the changed files. The nested runs pass
@@ -944,7 +990,7 @@ sources disagree and which view holds, and the options that do not fit.
 
 | Point | Views | What holds, and why |
 | --- | --- | --- |
-| The wrapper line | 9.7.1 sits inside KGP 2.4.21's fully supported range; 9.8.1 and later fix three high-severity advisories that cover 9.0.0 to 9.8.0 | 9.8.2: KGP permits newer Gradle, and the cost on the evidence is one deprecation warning, against advisories on the machine that holds the release secrets; 9.7.1 is the three-line fallback |
+| The wrapper line | 9.7.1 sits inside KGP 2.4.21's fully supported range; 9.8.1 and later fix three high-severity advisories that cover 9.0.0 to 9.8.0 | 9.8.2: KGP permits newer Gradle, and the cost on the evidence is one deprecation warning, against advisories on the machine that holds the release secrets; 9.7.1 is the two-line fallback |
 | JUnit line | 6.1.3 as the latest stable (toolchain findings); 5.x as named by the testing requirement (testing findings) | 5.14.4: the line named by the requirement and the one `kotlin-test-junit5` is tested against; 6.x is a one-line move |
 | Guarding the Gradle 9.0.0 floor | a permanent CI job compiling `build-logic` on 9.0.0 (toolchain C3); a TestKit consumer test (testing findings) | The Level 4b test: it also proves substitution, the stdlib pin and the JVM-attribute failure |
 | Where Dokka is applied | unconditionally in the publishing convention (build-logic §6.9); only for the Kotlin kinds (Dokka §6.3) | Only for the Kotlin kinds: the BOM must not receive Dokka |
