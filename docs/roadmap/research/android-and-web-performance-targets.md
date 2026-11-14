@@ -2,7 +2,7 @@
 
 ## 1. Question
 
-What sprite counts at 60 fps does a well-batched 2D renderer sustain (a) on a mid-range Android phone with GLES 3.0 and (b) in a browser with WebGL2 on a mid-range laptop integrated GPU, as of 2025–2026, and which reference-device classes should the Level 4c gates name?
+What sprite counts at 60 fps does a well-batched 2D renderer sustain (a) on a mid-range Android phone with GLES 3.0 and (b) in a browser with WebGL2 on a mid-range laptop integrated GPU, as of 2025–2026, and which reference-device classes should the nonfunctional gates name?
 
 **Decision it informs:** D13, the Android and web performance targets and the reference-device profile for the gate. This builds on `render-performance-and-verification.md` (§2, §3.3, §5, §6 "Targets"); I do not repeat that file.
 
@@ -164,7 +164,7 @@ CPU frame budgets (4 ms Android, 5 ms web) are my proposals anchored only on Pix
 
 ### Reasoning
 
-The evidence cannot distinguish 5k from 10k on Android, but the fill, CPU and upload arithmetic all point to feasibility at 32 px and not at 48–64 px, so the stated area ceiling matters more than the count. Staging the hard gate (5k now, 10k on measured headroom) keeps the Level 4c gate honest without promising numbers that no published benchmark backs. The web gate can be higher because the machine has about 10x the fill rate and several independent JS anchors, but it is conditional on a Chrome-only, cross-origin-isolated setup. I reject "keep 5k for web": it is more conservative than any anchor I found and would make the gate meaningless on Iris Xe.
+The evidence cannot distinguish 5k from 10k on Android, but the fill, CPU and upload arithmetic all point to feasibility at 32 px and not at 48–64 px, so the stated area ceiling matters more than the count. Staging the hard gate (5k now, 10k on measured headroom) keeps the nonfunctional gate honest without promising numbers that no published benchmark backs. The web gate can be higher because the machine has about 10x the fill rate and several independent JS anchors, but it is conditional on a Chrome-only, cross-origin-isolated setup. I reject "keep 5k for web": it is more conservative than any anchor I found and would make the gate meaningless on Iris Xe.
 
 ## 7. Load-bearing claims
 

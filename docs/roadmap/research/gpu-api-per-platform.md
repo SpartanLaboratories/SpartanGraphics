@@ -1,6 +1,6 @@
 # GPU API per platform, bindings, and shader strategy
 
-Researcher 4 of 12. Date of research: 2026-10-11. Tools: WebSearch and WebFetch only (no Firecrawl). The web tools hit a session limit at the very end, so two follow-up checks (libGDX `CHANGES` for the WebGL2 version, and the Chrome 146 compatibility-mode limits) are marked as unverified in Gaps.
+Question 4 of 12. Date of research: 2026-10-11. Tools: WebSearch and WebFetch only (no Firecrawl). The web tools hit a session limit at the very end, so two follow-up checks (libGDX `CHANGES` for the WebGL2 version, and the Chrome 146 compatibility-mode limits) are marked as unverified in Gaps.
 
 ## 1. Question
 
@@ -104,11 +104,11 @@ For the final state (Windows primary; macOS and Linux "should work"; Android; we
 3. Treat the built-in shader dialect as internal; the custom-shader contract stays Experimental and dialect-keyed, so it can add WGSL later without a major.
 4. Do not freeze a JDK floor above what you must (JDK 23 today); any WebGPU desktop module is a separate artifact so its JDK 22/25 requirement stays out of core.
 
-**Test hook (for question 7):** because shader sources are plain strings in one dialect, Level 4a tests can validate them offline (a glslang/`glslangValidator` check on each source, or `lwjgl-shaderc` on a JVM host) without a GPU. I did not verify that glslang accepts ES 3.00 sources through shaderc, only that the CLI route is plausible (Gaps).
+**Test hook (for question 7):** because shader sources are plain strings in one dialect, deterministic tests can validate them offline (a glslang/`glslangValidator` check on each source, or `lwjgl-shaderc` on a JVM host) without a GPU. I did not verify that glslang accepts ES 3.00 sources through shaderc, only that the CLI route is plausible (Gaps).
 
 ## 7. Gaps
 
-- **Spec knowledge not re-verified in this session (stated in Recommendation or Pitfalls, weakest evidence):** that GLSL 330 core accepts ES-style precision qualifiers so one source with a prefix works; GLES 3.0/WebGL2 feature set (instancing, UBO, texture arrays, MRT present; compute and SSBO absent); GL versus WebGPU clip-depth and texture-origin conventions; WebGL `webglcontextlost`/`restored` events; that LWJGL has no official Android support (so the Android backend uses the platform's `GLES30`). Question 7 and the planner should confirm against the specs before relying on them.
+- **Spec knowledge not re-verified in this session (stated in Recommendation or Pitfalls, weakest evidence):** that GLSL 330 core accepts ES-style precision qualifiers so one source with a prefix works; GLES 3.0/WebGL2 feature set (instancing, UBO, texture arrays, MRT present; compute and SSBO absent); GL versus WebGPU clip-depth and texture-origin conventions; WebGL `webglcontextlost`/`restored` events; that LWJGL has no official Android support (so the Android backend uses the platform's `GLES30`). Question 7 and the planning stage should confirm against the specs before relying on them.
 - **Not checked because the web tools hit a session limit at the end:** libGDX `CHANGES` for the exact version that added WebGL2 to GWT/TeaVM (a single third-party demo says 1.12); the Chrome 146 compatibility-mode restrictions (limits, texture-array and storage-buffer constraints) and its Android availability status.
 - **Not found:** any measurement of per-call Kotlin/Wasm versus Kotlin/JS WebGL cost (only Kool's maintainer statement and Kotlin chat threads); Kotlin/Wasm threading limits (SharedArrayBuffer, COOP/COEP) and whether the new `web` shared source set (js + wasmJs) exists as I recall; Skiko's per-platform GPU API; whether KorGE's current WebGL level is 2; WebGPU share-of-devices numbers for Android (one low-authority page said about 60%; I discarded it).
 - **Staleness warning:** the Kool README says Chrome is "still the only browser with WebGPU support", which contradicts the shipping status above, so that README is partly stale. Its Wasm-versus-JS advice may be stale too. Confirm with a small benchmark before the web phase starts.

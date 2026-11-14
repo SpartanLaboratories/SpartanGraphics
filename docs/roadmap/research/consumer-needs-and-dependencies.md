@@ -112,10 +112,10 @@ Sources: `MyGameTools docs/framework-vision-and-roadmap.md` §3 and the issues c
 ### 3.6 Scale: what "10k sprites" means for the client
 
 - Tier: codebase fact plus arithmetic.
-- Every `Alive` carries a `healthBar` sub-object that is drawn as its own quad (`Alive.kt:24,428-446`), and `VisibleObjectSnapshot.subObjects` flatten recursively. 10k alive entities are therefore about 20k quads, plus outlines. The 4c gate should count draw items (quads and glyph runs), or state that 10k means entities with one sub-object each.
+- Every `Alive` carries a `healthBar` sub-object that is drawn as its own quad (`Alive.kt:24,428-446`), and `VisibleObjectSnapshot.subObjects` flatten recursively. 10k alive entities are therefore about 20k quads, plus outlines. The nonfunctional gate should count draw items (quads and glyph runs), or state that 10k means entities with one sub-object each.
 - The GameTools medium target is 10k entities *server-wide*. Per-player filtering (#101) is what bounds the client's receive set, and it has no milestone. Until then the all-to-all broadcast sends everything. At the client's minimum zoom of 0.1 an RTS view can show most of a large map.
-- The live client cannot prove the target. `MyGameServer` spawns 10 zombies plus 1 `Alive` per player (`MyGameServer/.../Main.kt:30,260`). The 4c gate needs a synthetic scene in the graphics repo or a stress-populated server, not the client.
-- With deltas keyed by `EntityId` (#98), the client holds persistent per-entity state. Rebuilding 10k shape objects per frame creates garbage; the adapter would prefer updating retained shapes in place. The shape model should allow cheap in-place mutation. Tier: inference, for the render-performance researcher.
+- The live client cannot prove the target. `MyGameServer` spawns 10 zombies plus 1 `Alive` per player (`MyGameServer/.../Main.kt:30,260`). The nonfunctional gate needs a synthetic scene in the graphics repo or a stress-populated server, not the client.
+- With deltas keyed by `EntityId` (#98), the client holds persistent per-entity state. Rebuilding 10k shape objects per frame creates garbage; the adapter would prefer updating retained shapes in place. The shape model should allow cheap in-place mutation. Tier: inference, for the render-performance research.
 - After deltas, list order no longer carries draw order. The client needs an explicit layer or depth key per shape (and probably a sort key for top-down units). The reserved depth in the 2D API (decision 7) covers this. Inference.
 
 ### 3.7 Upstream changes
@@ -133,7 +133,7 @@ Not researched; the question is about this ecosystem's own consumers. See siblin
 
 - **Building a feature for a consumer that does not exist.** Text input, IME, clipboard and cursor shapes have no consumer until SpartanUI adds a `TextField`. The user has ordered them first; the justification is the Android soft-keyboard design, not a consumer. Say so in the roadmap, so P2 is not described as "SpartanUI needs it".
 - **Freezing a contract before the consumers have used it.** Decision 4 freezes pointer, text-measurement and audio contracts at 1.0. The consumers that exercise them are SpartanUI (pointer, measurement, clip) and the client (audio, textures). Neither will have used touch, fonts or loops before P3 unless the P1 shapes are chosen with them in mind (3.1, 3.4).
-- **The only desktop proof is the live client, and it is a 10-entity demo.** Do not let "verified through C1" stand in for the 4c perf gate or for tile/mask/atlas behaviour.
+- **The only desktop proof is the live client, and it is a 10-entity demo.** Do not let "verified through C1" stand in for the nonfunctional perf gate or for tile/mask/atlas behaviour.
 - **Assuming vision data reaches the client.** GameTools' fog-of-war is a server filter; nothing guarantees a client-usable vision map. A visibility mask designed around one assumed format would be wrong.
 - **Terrain with no visual data.** `TerrainType` has no texture or colour. A tile-map layer that expects the map to say how it looks will not fit GameTools' map model.
 - **Loose coupling of version cadence.** `api(graphics-core)` means every breaking graphics 0.x also breaks SpartanUI. Batched phase-boundary 0.x releases help only if SpartanUI ships a matching minor at each boundary.
@@ -183,7 +183,7 @@ Not researched; the question is about this ecosystem's own consumers. See siblin
 | Ability cooldowns, targeting indicators | Circles, lines, polygons, alpha | P5+ / P5+ | GameTools Phase 6 (#117) |
 | Floating combat text | World-layer text with alpha | P2 for text, P5+ polish / P2 | event feed for `DamageDealt` |
 | Inventory grid, tooltips | SpartanUI layout containers; atlas icons | P5+ / P5+ | GameTools Phase 6 (#118); SpartanUI layout not in plan |
-| 10k-entity scenes (about 20k quads) | Batched renderer (G5), in-place shape update, 4c gate | P1 / P1 | #101 bounds the receive set; client cannot prove the gate |
+| 10k-entity scenes (about 20k quads) | Batched renderer (G5), in-place shape update, nonfunctional gate | P1 / P1 | #101 bounds the receive set; client cannot prove the gate |
 | Explicit draw order after deltas | Layer or depth key per shape | P1 (shape design) / P1 | #98 removes list-order draw order |
 | Networking replacement | none | n/a | #124 + #132 (6.0.0) |
 | Adapters for GeneralTools types | none; permanent under decision 11 | n/a | GeneralTools#7 helps only if GameTools goes multiplatform |
@@ -201,7 +201,7 @@ Not researched; the question is about this ecosystem's own consumers. See siblin
 5. **Resolve the GeneralTools conflict explicitly.** State that under decision 11 the client's adapters are permanent, and amend the split plan's "go away when #7 lands" line. The libraries' basic types are graphics-owned for good.
 6. **Mark the client's Phase 3-gated features as P5+ with the GameTools dependency** (tile terrain, fog and minimap, event-driven positional audio, ability and item UI) and write the data-shape assumptions into the feature designs: map = flat indices with a client-side visual mapping; visibility mask = consumer-built; events = client-supplied position.
 7. **Treat Android and web as sample-app-proven only.** Record in the roadmap that no consumer exists for either, and list the prerequisites for a real client (section 3.7) as an unscheduled follow-on, not a dependency of any phase.
-8. **Do not use the client as the 4c proof.** The gate needs a synthetic scene in this repo (about 20k quads, counting sub-objects).
+8. **Do not use the client as the nonfunctional proof.** The gate needs a synthetic scene in this repo (about 20k quads, counting sub-objects).
 
 ## 8. Gaps
 
