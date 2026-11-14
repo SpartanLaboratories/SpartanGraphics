@@ -71,7 +71,7 @@ Each finding carries an evidence tier: **Consensus** (several independent credib
 - sokol ships a dummy backend because "this is useful for writing tests that need to run on the command line" ([`sokol_gfx.h`](https://github.com/floooh/sokol/blob/master/sokol_gfx.h)). KorGE's `AG` routes through `execute(command)`, and it has an `AGToCommandChannel` that turns draws into data. Tier: Practice.
 - **The consequence for SpartanGraphics (inference, Opinion):** a recording backend is only as useful as the logic that sits above the contract.
   - With a shapes-level contract (the split plan), a recorder captures the shape list. That is what graphics-core already tests. Batching, clip splitting and outline geometry are inside each real backend and so untestable without a GPU. The plan itself says G5 "can't be unit-tested without a GPU".
-  - With a frame-level contract, a recorder captures the batches. Batching, sorting, clip-induced splits, draw-call counts and vertex counts become Level 2 and Level 4a assertions. It also gives the Level 4c gate a GPU-independent metric: draw calls and bytes per frame for N sprites.
+  - With a frame-level contract, a recorder captures the batches. Batching, sorting, clip-induced splits, draw-call counts and vertex counts become component and deterministic assertions. It also gives the nonfunctional gate a GPU-independent metric: draw calls and bytes per frame for N sprites.
 
 ### 3.4 Lifecycle and context loss
 
@@ -94,7 +94,7 @@ Each finding carries an evidence tier: **Consensus** (several independent credib
 ## 4. How comparable projects do it (signatures worth copying)
 
 - **KorGE (command object):** `AG.draw(frameBuffer, frameBufferInfo, vertexData, program, drawType, vertexCount, indices, ..., scissor, cullFace, instances)` builds `AGBatch(...)` and calls `execute(AGCommand)`. A data-shaped command is recordable, but the signature itself is the cautionary part (about 20 positional parameters).
-- **Kool (frame-level):** `fun renderFrame(frameData: FrameData, ctx: KoolContext)`, `fun uploadTextureData(tex: Texture<T>)`, `val features: BackendFeatures`, `val deviceCoordinates: DeviceCoordinates`, `val frameGpuTime: Duration`. Frame-level, with a features object and GPU timing exposed, which maps well to the 4c gate.
+- **Kool (frame-level):** `fun renderFrame(frameData: FrameData, ctx: KoolContext)`, `fun uploadTextureData(tex: Texture<T>)`, `val features: BackendFeatures`, `val deviceCoordinates: DeviceCoordinates`, `val frameGpuTime: Duration`. Frame-level, with a features object and GPU timing exposed, which maps well to the nonfunctional gate.
 - **libGDX (capability plus sub-interface):** `boolean isGL30Available(); GL30 getGL30();`
 - **sokol (immutable pipeline objects, no-op backend):** `sg_make_pipeline(desc)`, `sg_apply_pipeline`, `sg_apply_bindings`, `sg_draw`, `sg_query_features()`.
 - **Kotlin precedent for guarded implementation:** `@SubclassOptInRequired(UnstableApi::class) interface CoreLibraryApi`.
@@ -108,7 +108,7 @@ Each finding carries an evidence tier: **Consensus** (several independent credib
    - Android pause, a browser tab hiding, and GPU device loss are three different events with different recoveries.
    - Merging them forces every backend to over-recover.
    - Splitting them without saying who owns the resources leads to libGDX's "unmanaged texture" bug class.
-5. **A GL-shaped frozen contract when macOS and the plan's own risk list already point at Metal.** All three official backends will likely be GL-family (GL 3.3, GLES 3, WebGL 2), which validates the contract only against GL semantics. Review the pipeline descriptor against WebGPU/Metal's immutable pipeline state and explicit passes before 1.0. (Researcher 4 owns the web GPU API choice. If it is WebGPU, you get a non-GL check for free.)
+5. **A GL-shaped frozen contract when macOS and the plan's own risk list already point at Metal.** All three official backends will likely be GL-family (GL 3.3, GLES 3, WebGL 2), which validates the contract only against GL semantics. Review the pipeline descriptor against WebGPU/Metal's immutable pipeline state and explicit passes before 1.0. (The web GPU API choice belongs to question 4. If it is WebGPU, you get a non-GL check for free.)
 6. **Shape-level contracts accumulate obligations.** Every new shape means every backend (and every third-party one) implements new drawing code.
 7. **Two sources of truth for resources.** If the backend holds the only copy of a texture, a lost context cannot be repaired. The common layer must own the recipe.
 8. **Abstract base classes as the evolution tool** re-create the fragile-base-class problem the user's library rules avoid. With real JVM default methods they are not needed for evolution. Keep them only to share logic.
@@ -133,7 +133,7 @@ Keep the split plan's skeleton (`graphics-core` common, `graphics-desktop` backe
 - Pipeline creation from a descriptor.
 - `submit(frame: RenderFrame): Result<...>`.
 - A device-epoch signal.
-- Optional `FrameStats`, which feeds the 4c gate with draw calls and bytes.
+- Optional `FrameStats`, which feeds the nonfunctional gate with draw calls and bytes.
 
 The sketch below is illustrative, not a design.
 
@@ -166,8 +166,8 @@ Each is a separate small interface, so they can evolve at their own speed (input
 | `FrameDriver` + `Clock` | Platform calls `onFrame(time)`. Only called while active. Clock is monotonic, and the contract says a hidden or paused gap is **not** a frame delta. | Policy (`maxFrameDelta`) is a parameter, per the user's rules. |
 | `RenderBackend` | As above | Textures, targets and readback as sub-interfaces behind `extension(...)`. |
 | `InputSource` | Pointer, keys, scroll now. Touch, gestures, IME, clipboard and cursor later | Each later capability is an opt-in sub-interface plus a capability key. |
-| `TextMeasurer` | Measure a string at a size | A separate real-font `GlyphRasterizer` extension later (the same principle: the backend rasterises a glyph, common code owns atlas and layout). Researcher 8 owns the details. |
-| `AssetSource` | Name to bytes | Whether it is `suspend` is the draft's open question. Researcher 11's lane. |
+| `TextMeasurer` | Measure a string at a size | A separate real-font `GlyphRasterizer` extension later (the same principle: the backend rasterises a glyph, common code owns atlas and layout). Question 8 covers the details. |
+| `AssetSource` | Name to bytes | Whether it is `suspend` is the draft's open question. Question 11's topic. |
 | Audio backend | No graphics dependency | Own contract, own version. |
 
 A per-backend factory, for example `DesktopPlatform.create(config): GraphicsPlatform`, bundles the parts. A third party can then swap one part (a different `InputSource` on the stock renderer) without forking the rest.
@@ -180,7 +180,7 @@ A per-backend factory, for example `DesktopPlatform.create(config): GraphicsPlat
   3. *GPU device loss*: `RenderBackend.deviceEpoch`, plus a listener, owned by the backend. Pause does **not** imply loss. A backend raises device loss only when its context really was replaced.
 - **Recovery rule, stated in the contract:** after an epoch bump all backend handles are invalid. The common layer rebuilds pipelines from their descriptors and re-uploads textures from retained recipes (asset name or CPU pixels) lazily on the next frame. Render-target contents are **not** recoverable and the game must re-render them.
 - **Threading rule in KDoc:** every backend call happens on the render thread (the GL thread on Android, the single JS thread on web, the main-thread constraint on macOS).
-- **Conformance:** ship a published abstract conformance suite (Level 3) that any backend runs. It must assert that every declared event can fire.
+- **Conformance:** ship a published abstract conformance suite (integration) that any backend runs. It must assert that every declared event can fire.
 
 ### 6.4 Evolution toolkit (all additive)
 
@@ -194,7 +194,7 @@ A per-backend factory, for example `DesktopPlatform.create(config): GraphicsPlat
 
 ### 6.5 What Phase 1 should adopt now
 
-- **G3:** define `DrawBatch`, `RenderFrame` and the batch state block (clip rectangle, blend, pipeline id, texture) in graphics-core, and have the draw model emit them. The G3 clip rectangle then becomes a field in this state, not a renderer special case. Reserve `xyz` in the vertex data and a 4x4 transform from the start (the app-facing side is researcher 6's lane).
+- **G3:** define `DrawBatch`, `RenderFrame` and the batch state block (clip rectangle, blend, pipeline id, texture) in graphics-core, and have the draw model emit them. The G3 clip rectangle then becomes a field in this state, not a renderer special case. Reserve `xyz` in the vertex data and a 4x4 transform from the start (the app-facing side is question 6's topic).
 - **G4:**
   - Write the SPIs in section 6.2 as above, with defaults and KDoc. Use `RenderBackend` in place of the plan's `Renderer`.
   - Include the capability set, the device-epoch signal, the pass-target slot and the surface config descriptor.
@@ -202,8 +202,8 @@ A per-backend factory, for example `DesktopPlatform.create(config): GraphicsPlat
   - Ship `graphics-test` (recording backend, scripted input, manual clock, fixed surface) alongside, as the draft proposes. Without it, nothing tests the contract.
 - **G5:**
   - Implement only `submit`, the texture store and the universal pipeline in the desktop module.
-  - Add two-level tests: batching and clip splitting in Level 2 and 4a against the recorder, and a pixel-readback golden test as Level 3 or 4b on a machine with a GPU.
-  - Have G5's renderer report `FrameStats` so the 4c gate does not depend on a GPU.
+  - Add two kinds of test: batching and clip splitting in component and deterministic tests against the recorder, and a pixel-readback golden test as an integration or e2e test on a machine with a GPU.
+  - Have G5's renderer report `FrameStats` so the nonfunctional gate does not depend on a GPU.
 
 ### 6.6 What stays Experimental at 1.0
 
@@ -228,8 +228,8 @@ The obvious option is the split plan's high-level `Renderer`, because it is simp
 - **Klib (Kotlin/JS, Wasm, Native) binary compatibility.** I could not establish whether adding a defaulted member to a frozen interface is klib-compatible, nor how klib ABI behaves across compiler versions. The binary-compatibility-validator calls its klib support experimental. **Blocks a claim, not a design:** I recommend promising source compatibility off the JVM and JVM binary compatibility only. A spike with a core compiled at 0.1 and a backend compiled against 0.2 (and the reverse) on JS and Wasm would settle it.
 - **JVM default-method claim (section 3.2, point 3)** rests on the Kotlin docs' mode table plus my reasoning about the JVM. It was not tested. The repo is on Kotlin 2.1.20, whose default mode I did not verify. Test it with a two-version fixture in G1's build-logic.
 - **Android and web lifecycle primary sources were not fetched** (session limit). Unverified from this session: `GLSurfaceView`'s EGL-context behaviour on pause (`setPreserveEGLContextOnPause`) and when `onSurfaceCreated` fires again, the WebGL `webglcontextlost`/`webglcontextrestored` events and `preventDefault`, and whether `requestAnimationFrame` stops in hidden tabs. My three-channel split in 6.3 depends on these being distinct events. Verify before G4 freezes the event lists.
-- **Per-call and per-copy cost on Kotlin/Wasm** is unquantified (one Slack answer only). Researcher 7 should measure; my "bulk array plus short command list" shape is the conservative choice either way.
+- **Per-call and per-copy cost on Kotlin/Wasm** is unquantified (one Slack answer only). Question 7's research should measure; my "bulk array plus short command list" shape is the conservative choice either way.
 - **Skia Graphite and bgfx internals** were only partly confirmed (secondary excerpts, and the bgfx docs pages did not load). I used them only as supporting examples. The conclusions do not rest on them.
-- **Value classes in frozen SPI signatures:** I believe `@JvmInline value class` parameters mangle JVM method names and complicate binary compatibility. I did not source that. Treat as a question for the idiomatic-Kotlin researcher (3), and use plain classes for handles until it is answered.
-- **Not covered:** the GPU API per platform, shader language strategy and batching numbers (other researchers), and the audio SPI design beyond "separate contract". The brief did not state whether `AssetSource` being `suspend` is decided. The draft proposes it and the baseline plan does not.
+- **Value classes in frozen SPI signatures:** I believe `@JvmInline value class` parameters mangle JVM method names and complicate binary compatibility. I did not source that. Treat as a question for the idiomatic-Kotlin research (question 3), and use plain classes for handles until it is answered.
+- **Not covered:** the GPU API per platform, shader language strategy and batching numbers (other questions), and the audio SPI design beyond "separate contract". The brief did not state whether `AssetSource` being `suspend` is decided. The draft proposes it and the baseline plan does not.
 - **Firecrawl:** not used, as instructed. Primary sources for bgfx internals, Godot's `RenderingDeviceDriver` and Skia's Graphite docs are the ones I would fetch first if credits allow.

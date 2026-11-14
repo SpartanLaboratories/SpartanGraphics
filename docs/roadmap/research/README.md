@@ -2,13 +2,13 @@
 
 - **For:** `docs/roadmap/vision-and-roadmap.md`, the target-state and phased roadmap for
   `SpartanLaboratories/SpartanGraphics`.
-- **Written by:** the planner. The `<question-slug>.md` files beside this one belong to the
-  researchers who wrote them and are never edited here.
+- **Written by:** the planning stage. The `<question-slug>.md` files beside this one hold each
+  question's findings as written and are never edited here.
 - **Dates:** research plan and findings 2026-10-11; verification and summary 2026-10-19.
   Baseline: `main` @ `50b61e2`, issue #1 as updated on 2026-10-11.
 - **Citations:** documents by section, code by symbol, never by line number.
 
-This file has three parts: the research plan (written before any researcher started), the
+This file has three parts: the research plan (written before any research started), the
 verification results, and the summary that stage 3 designs from.
 
 ---
@@ -17,7 +17,7 @@ verification results, and the summary that stage 3 designs from.
 
 ### 1.1 Binding constraints
 
-The user's interview answers, one line each. Every researcher brief carries them.
+The interview's answers, one line each. Every research brief carries them.
 
 | ID | Constraint |
 |----|------------|
@@ -29,7 +29,7 @@ The user's interview answers, one line each. Every researcher brief carries them
 | Q3a | Official platforms: Windows, Android, web. macOS and Linux are "should work, untested" with compile-only CI, listed as Later. iOS is out of the roadmap. |
 | Q3b | Order: real fonts and text input, then Android, then web, then 1.0, then the remaining features. |
 | Q4a | 2D with room for 3D: the API reserves depth and 3D transforms from the start. The 3D track is "beyond this roadmap", unscheduled; every scheduled phase is 2D; the frozen 2D API leaves that room. |
-| Q4b | About 10k sprites on screen at 60 fps on a mid-range desktop GPU. Android and web targets are set by research. Batched drawing comes early, enforced by a Level 4c performance gate. |
+| Q4b | About 10k sprites on screen at 60 fps on a mid-range desktop GPU. Android and web targets are set by research. Batched drawing comes early, enforced by a nonfunctional performance gate. |
 | Q5 | An unpublished sample app per platform in this repo proves the Android and web backends. Desktop is proven by the game client. |
 | Q6a | Roadmap at `docs/roadmap/vision-and-roadmap.md`; research in `docs/roadmap/research/`; replaced versions in `docs/roadmap/superseded/`. |
 | Q6b | Roadmap Phase 1 is G1–G7 (issue #1); later phases are 2..N, with a note that the split plan's Phases 2 and 3 belong to SpartanUI and the game client. |
@@ -55,8 +55,8 @@ to graphics-core's draw model, and G5's renderer is batched and draws the clip w
 
 ### 1.2 Reuse first
 
-An interrupted planner run left ten complete findings files here, written on 2026-10-11 under
-the previous researcher format (no "Load-bearing claims" section). All ten were current when this
+An interrupted planning run left ten complete findings files here, written on 2026-10-11 under
+the previous findings format (no "Load-bearing claims" section). All ten were current when this
 plan was written (same day, same versions), and the 2026-10-19 verification re-checked their
 claims against today's sources. Each is **reused** by path; none is researched again.
 
@@ -85,7 +85,7 @@ They cite the previous run's interview by number. The mapping to today's answers
 | [`render-performance-and-verification.md`](render-performance-and-verification.md) | D13, D14 | Android and web targets are judgement on thin evidence; CI GL spike not run |
 | [`consumer-needs-and-dependencies.md`](consumer-needs-and-dependencies.md) | D15, inputs to D11 and D16 | audio durations not measured; GameTools vision wire format unspecified |
 
-The previous run's "best 2D graphics systems" researcher wrote nothing. Its need is folded into
+The previous run's "best 2D graphics systems" question left no findings. Its need is folded into
 the new questions N2 and N3 below as their "best systems for the purpose" lens, aimed at the
 decisions those features force on the frozen contracts.
 
@@ -120,7 +120,7 @@ that the interview did not settle.
 
 | ID | Decision | Options | Criteria | Evidence that settles it | Research |
 |---|---|---|---|---|---|
-| D13 | Batching design, Level 4c gate, Android and web targets | as listed | Q4b | batcher designs; published throughput on mid-range devices | reused: `render-performance-and-verification.md`; **new: N4** for the Android and web numbers |
+| D13 | Batching design, nonfunctional gate, Android and web targets | as listed | Q4b | batcher designs; published throughput on mid-range devices | reused: `render-performance-and-verification.md`; **new: N4** for the Android and web numbers |
 | D14 | Renderer verification without a GPU; role of the sample apps | software rasterisers; recording backend; manual only | Q4b, Q5, Q3a | CI practice of renderers | reused: `render-performance-and-verification.md` |
 
 **Consumers and ordering**
@@ -137,7 +137,7 @@ Not researched: GeneralTools#7 (an open decision by assumption; `consumer-needs-
 
 ### 1.4 New questions
 
-Each researcher works through three lenses inside its question: the best systems for the purpose,
+The research for each question works through three lenses: the best systems for the purpose,
 common practice and convention, and idiomatic Kotlin.
 
 | ID | File | Question | Informs |
@@ -145,18 +145,18 @@ common practice and convention, and idiomatic Kotlin.
 | N1 | [`web-target-kotlin-js-vs-wasm.md`](web-target-kotlin-js-vs-wasm.md) | As of October 2026, should the web backend and the Phase-1 compile check target Kotlin/JS, Kotlin/Wasm, or both; and what binary-compatibility guarantee can a frozen KMP contract give third-party implementers on klib targets? | D2, D5 |
 | N2 | [`shape-rendering-and-antialiasing.md`](shape-rendering-and-antialiasing.md) | How should the R1/R2 shapes be drawn and antialiased on GL 3.3, GLES 3.0 and WebGL2, and what does the chosen technique require of the backend contract frozen at 1.0? | D7 |
 | N3 | [`tilemaps-render-targets-and-masks.md`](tilemaps-render-targets-and-masks.md) | What do sprite atlases and animation, tile-map layers, render-to-texture with several cameras and a visibility mask, and particles require of the frozen backend contract (retained geometry, render targets, stencil, blend modes), and how do mature 2D engines build them? | D8 |
-| N4 | [`android-and-web-performance-targets.md`](android-and-web-performance-targets.md) | What sprite counts at 60 fps does a well-batched 2D renderer sustain on a mid-range Android phone (GLES 3.0) and in WebGL2 on a mid-range laptop integrated GPU, so the Android and web Level 4c targets can be set? | D13 |
+| N4 | [`android-and-web-performance-targets.md`](android-and-web-performance-targets.md) | What sprite counts at 60 fps does a well-batched 2D renderer sustain on a mid-range Android phone (GLES 3.0) and in WebGL2 on a mid-range laptop integrated GPU, so the Android and web nonfunctional targets can be set? | D13 |
 | N5 | [`android-build-and-platform-floors.md`](android-build-and-platform-floors.md) | How should a KMP library publish its Android artifacts in October 2026, and what minSdk and other platform floors should the Android backend adopt? | D3 |
 
 ### 1.5 Verification plan
 
 - Each new findings file ends with its load-bearing claims.
-- The reused files have no such section, so the planner extracts their load-bearing
-  outside-world claims from their Findings.
-- One verifier receives the combined list. Its verdicts are recorded in Part 2.
+- The reused files have no such section, so their load-bearing outside-world claims are
+  extracted from their Findings.
+- One verification pass checks the combined list. Its verdicts are recorded in Part 2.
 - A claim that fails leaves the design inputs, and any decision resting on it reopens.
 - Claims about this repo, the monolith client (`SpartanLabsGaming/GameGraphics`) and the sibling
-  repos are spot-checked by the planner against the code, not by the verifier. Those checks are
+  repos are spot-checked against the code, outside the verification pass. Those checks are
   recorded in Part 2 too.
 
 ---
@@ -165,10 +165,10 @@ common practice and convention, and idiomatic Kotlin.
 
 ### 2.1 How the claim list was built
 
-- **Reused files:** they have no "Load-bearing claims" section, so the planner extracted the
-  outside-world claims their recommendations rest on from their Findings.
+- **Reused files:** they have no "Load-bearing claims" section, so the outside-world claims their
+  recommendations rest on were extracted from their Findings.
 - **New files (N1–N5):** their §7 "Load-bearing claims" lists, taken whole.
-- **Two tiers, one verifier.**
+- **Two tiers, one verification pass.**
   - **Tier A** (about 125 claims): every claim a roadmap-level decision (D1–D17) rests on,
     checked fully, including currency.
   - **Tier B** (about 90 claims): every other listed claim. These are supporting precedents or
@@ -176,8 +176,8 @@ common practice and convention, and idiomatic Kotlin.
 - **Duplicates merged before sending:** G5 into N5-17, IN10 into N5-13, AU6 into N5-16, RP12
   into N4-9, K4 into N1-15, B9 into N1-14, K10 into N1-12, and the Wasm-speed half of G12 into
   N1-8.
-- **Runs:** the first verifier (2026-10-11) died on an API usage limit before returning
-  anything. The second run (2026-10-19) produced the verdicts in 2.2.
+- **Runs:** the first verification run (2026-10-11) died on an API usage limit before
+  returning anything. The second run (2026-10-19) produced the verdicts in 2.2.
 
 ### 2.2 Verdicts
 
@@ -193,7 +193,7 @@ unchecked.
 | N5-4 | unclear | The AGP roadmap confirms AGP 10.0 (late 2026) removes the `android.newDsl` and `android.builtInKotlin` opt-outs. It does not say plain `com.android.library` stays supported; that is inference. The Android phase confirms it, and the fallback is a single-target KMP module on the Android-KMP plugin. |
 | AU7 | unclear | Only "WAV, AIFF and AU are the standard Java Sound formats" is on the cited page. That is enough for "Java Sound alone does not play MP3 or Ogg", and the desktop decoder choice is unaffected. |
 | RP6 | unclear | The Khronos wiki would not open; search summaries agree with the claim. Nothing depends on it: the batcher uses orphaning or a small ring and never persistent mapping. |
-| RP13 | unclear | The 2018 thread would not open. Current browser support for GPU timer queries is only secondary-sourced. The 4c gate does not use browser GPU timers, so nothing changes. |
+| RP13 | unclear | The 2018 thread would not open. Current browser support for GPU timer queries is only secondary-sourced. The nonfunctional gate does not use browser GPU timers, so nothing changes. |
 
 Partial support worth knowing, though the verdict is `holds`:
 - **G15:** `GL30 extends GL20` is in libGDX's source, not on the cited wiki page.
@@ -209,7 +209,7 @@ Partial support worth knowing, though the verdict is `holds`:
 
 #### Tier A (checked fully, including currency)
 
-| ID | Claim | Feeds | Verdict | Verifier's finding (2026-10-19) |
+| ID | Claim | Feeds | Verdict | Verification finding (2026-10-19) |
 |---|---|---|---|---|
 | N1-1 | Kotlin/Wasm Beta, Kotlin/JS Stable | D2 | holds | Both stability pages; Wasm Beta since 2.2.20 |
 | N1-3 | Roadmap: "Promote Kotlin/Wasm to Stable" (KT-88663), no version | D2 | holds | "In focus now"; modified Aug 2026, next Feb 2027 |
@@ -351,11 +351,11 @@ All 91 hold.
   21, 23, 24, 25, 26.
 - **N5** (`android-build-and-platform-floors.md` §7): items 3, 6, 9, 14, 15, 19, 21, 22, 23, 24.
 
-### 2.3 Codebase spot-checks (planner)
+### 2.3 Codebase spot-checks
 
 Claims about this repo, the monolith client (`SpartanLabsGaming/GameGraphics`, the future
-`MyGameClient`) and the sibling repos are not the verifier's job. The planner checked each one
-the research leans on, against the code. All hold.
+`MyGameClient`) and the sibling repos are outside the verification pass. Each one the research
+leans on was checked against the code. All hold.
 
 | Claim | Where it is used | Checked against | Result |
 |---|---|---|---|
@@ -417,7 +417,7 @@ an outside-world claim, the claim ID points into 2.2.
   - G1's non-JVM compile-check target is `js`, with the default hierarchy template.
   - Web code lives in `webMain`.
   - The web phase adds `wasmJs` as a compile-only tripwire.
-  - `wasmJs` is published once Kotlin/Wasm is Stable and `wasmJs` passes the web Level 4c gate.
+  - `wasmJs` is published once Kotlin/Wasm is Stable and `wasmJs` passes the web nonfunctional gate.
     That is an additive variant, so it can land before or after 1.0.
   - The roughly 40 WebGL2 entry points are hand-written `internal external` declarations.
   - The vertex upload sits behind one `expect`/`actual` seam.
@@ -564,7 +564,7 @@ the refinements from N2 and N3.
   circles and ellipses.
 - **9-slice:** nine quads on a shared vertex grid, using the texture source rectangle.
 - **Later options:** MSAA is an optional Experimental request. SDF pipelines are added only if
-  the Level 4c gate demands them.
+  the nonfunctional gate demands them.
 - **Landing order:**
   1. 9-slice and linear gradients;
   2. the tessellator, with rounded-rectangle fill and outline;
@@ -580,8 +580,8 @@ the refinements from N2 and N3.
   server-named textures.
 - **R4 tier 1:** a camera-independent CPU chunk cache, copied into the frame stream. No contract
   change.
-- **R4 tier 2:** retained GPU geometry, as an Experimental extension, only if a measured 4c tile
-  scene fails.
+- **R4 tier 2:** retained GPU geometry, as an Experimental extension, only if a measured
+  nonfunctional tile scene fails.
 - **R5:**
   - The visibility mask is a CPU-built low-resolution texture, composited by blending. It needs
     no stencil.
@@ -673,7 +673,7 @@ and web audio in Phases 3 and 4; A3 after 1.0.
 - **Open:** the module form (the draft's `assets` versus the split plan's `assets-core`) and the
   plugin's publishing route.
 
-**D13. Batching, the Level 4c gate, and the targets.**
+**D13. Batching, the nonfunctional gate, and the targets.**
 - **Batching:** vertex-expanded quads, built in common code. A batch flushes on texture, blend,
   clip, shader or capacity change; capacity is a parameter; draw order is preserved; atlases
   keep batches long.
@@ -702,8 +702,8 @@ and web audio in Phases 3 and 4; A3 after 1.0.
 
 **D14. Verification without a GPU.** Settled by H-C (3.5): Linux runners may host the official
 platforms' tests.
-- **Level 2 and 4a:** the recording backend.
-- **Level 3 and 4b:** software rasterisers: llvmpipe under Xvfb for the GL renderer, headless
+- **Component and deterministic:** the recording backend.
+- **Integration and e2e:** software rasterisers: llvmpipe under Xvfb for the GL renderer, headless
   Chromium on SwiftShader for web, and the Android emulator nightly.
 - **Goldens:** generated on the CI rasteriser, compared with a tolerance.
 - **Sample apps:** each runs a shared, seeded reference scene in capture or benchmark mode.
@@ -728,7 +728,7 @@ platforms' tests.
 - **Android and web** have no consumer beyond the sample apps. A real client port needs a
   multiplatform GameTools protocol and a browser transport in WebTools (CN1). Both are
   unscheduled.
-- **4c gate:** the client cannot prove it; it is a 10-zombie demo.
+- **Nonfunctional gate:** the client cannot prove it; it is a 10-zombie demo.
 - **Phase 2 text input** has no consumer in today's plans. SpartanUI plans no text field
   (verified). The user's order stands.
 - **Evidence:** `consumer-needs-and-dependencies.md` §6 and §7; 2.3.
@@ -794,7 +794,7 @@ that research forces, or a new decision.
 
   At 64 px the gate becomes a fill-rate test (about 41 Mpx).
 
-The user answered on 2026-10-19. The answers are in 3.5.
+These decisions were settled on 2026-10-19. The answers are in 3.5.
 
 ### 3.4 Open decisions carried to the roadmap (they do not block stage 3)
 
@@ -820,7 +820,7 @@ The user answered on 2026-10-19. The answers are in 3.5.
 - **D5:** the wording of the 1.0 compatibility promise.
 - **D3:** minSdk, and the bytecode level of Android-consumed modules.
 - **The Gradle plugin's publishing route:** Plugin Portal or Central only.
-- **Reference hardware** for the timing half of the 4c gate.
+- **Reference hardware** for the timing half of the nonfunctional gate.
 - **When to publish `wasmJs`:** before or after 1.0, once Kotlin/Wasm is Stable.
 
 *(2026-10-20:)* The roadmap's section 5 now records these decisions as they are settled. Two
@@ -834,12 +834,12 @@ The roadmap records the risks of the GeneralTools types.
 
 ### 3.5 Answers at the stage-2 halt (binding)
 
-The user's answers of 2026-10-19, one line each. They bind stage 3 exactly as Part 1.1 does.
+The answers of 2026-10-19, one line each. They bind stage 3 exactly as Part 1.1 does.
 
 | ID | Constraint |
 |----|------------|
 | H-A | Room for 3D is reserved at the renderer and camera boundary: a 4x4 matrix with a per-layer view-projection; a thin `Camera` interface over `Camera2D`; frames as ordered layers, each with its own camera, clip and viewport; an integer order key instead of z; depth and stencil request fields; pipeline descriptors that name their vertex layout; `PickHit`. Shapes, `Point`, `Size` and `Rect` stay strictly 2D, and a pre-1.0 spike drives a depth-tested 3D layer through the frozen contracts. |
-| H-A (process) | The scope-change comment on issue #1 for G2–G5 is not approved for posting. Its proposed text goes to the user in the planner's report. Until it is approved, #1's stage list stays as it is. |
+| H-A (process) | The scope-change comment on issue #1 for G2–G5 is not approved for posting. Its proposed text goes to the user in the planning report. Until it is approved, #1's stage list stays as it is. |
 | H-B | A1 and the A2 model (buses, streamed music, crossfade) move ahead of Android, on an OpenAL desktop backend, as an independent audio track in Phase 2. `audio-android` and `audio-web` are written once, in Phases 3 and 4. A3 stays after 1.0. |
 | H-C | Linux runners may host the official platforms' tests: the Android emulator, headless Chromium, and llvmpipe pixel tests of the shared GL renderer. The Linux desktop backend itself (windowing, input, packaging) stays "should work, untested". |
 | H-D | The desktop gate is 10k textured quads of about 32 px: single atlas, alpha-blended, moving and rotating, about 10 Mpx covered at 1080p. Every gate is stated as sprites plus covered area. |

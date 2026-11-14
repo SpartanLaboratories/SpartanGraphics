@@ -16,7 +16,7 @@ How should SpartanGraphics hit and prove its render target (about 10k sprites at
   - PixiJS v8 reports 100k moving sprites at about 15 ms CPU and about 2 ms GPU (hardware unstated).
   - "10k sprites" is meaningless without a scene profile: sprite size, overdraw, atlas count, blend. Fill rate and overdraw, not sprite count, decide mobile results.
   - The gate must pin the scene profile.
-- **The 4c gate has two halves.**
+- **The nonfunctional gate has two halves.**
   - *Structural counters run in CI on any machine, GPU or not.* They are draw calls, flushes by reason, bytes uploaded, vertices, and allocated bytes per steady-state frame. All are deterministic.
   - *Timing is a reference-hardware release gate* (manual or self-hosted runner). It uses frame-time percentiles (p50, p95, p99, max), a warm-up, a seeded scene, and results committed as a baseline file.
   - Software rasterisers cannot give meaningful timing.
@@ -209,7 +209,7 @@ How should SpartanGraphics hit and prove its render target (about 10k sprites at
 
 - **Build the batch in common, platform-independent code. Only the GL (or other GPU API) calls are backend-specific.**
   - A pure `BatchBuilder` turns the ordered draw list into vertex runs. It has capacity, flush reasons, a texture slot and a clip rectangle, and writes into a platform vertex sink.
-  - That makes the draw-call count, flush reasons, vertex bytes and allocation behaviour testable at Levels 2 and 4a with exact assertions and no GPU.
+  - That makes the draw-call count, flush reasons, vertex bytes and allocation behaviour testable in component and deterministic tests with exact assertions and no GPU.
   - It is also where the shared, expensive-to-change decisions live. How this sits against the backend contract is question 5's concern.
 - **Vertex-expanded quads, with the vertex format reserving z.**
   - Reasons: lines, polygons, 9-slice and gradients need arbitrary vertices anyway, so one general stream serves every shape. The clip and draw-order rules are simplest there.
@@ -239,7 +239,7 @@ The profile is: single atlas, alpha-blended, rotated and moving sprites, 32 to 6
 
 Evidence for the web and Android figures is thin: old Pixi bunnymark anecdotes ([iPad 4 held 15k bunnies](https://www.html5gamedevs.com/topic/5653-bunnymark-perf-comparisons/)) and the Pixi v8 figures. These are my judgment, to be replaced by measurement.
 
-### The 4c gate
+### The nonfunctional gate
 
 1. **CI-enforced structural counters** (every commit, any runner).
    - A deterministic scene set: sprite swarm, clip-heavy UI, text-heavy.
@@ -255,19 +255,19 @@ Evidence for the web and Android figures is thin: old Pixi bunnymark anecdotes (
 
 This revises the "no CI runner can open a window" line in the split plan's testing section and Risks. Replace it with: "No CI runner has a GPU; the renderer is verified on software rasterisers, and timing is verified on reference hardware."
 
-| Level | Technique | Where |
+| Set | Technique | Where |
 |---|---|---|
-| 2 | `BatchBuilder`, draw-list translation, recording renderer | any |
-| 3 | Real GL on llvmpipe: shader compile and link, FBO readback pixel probes (clip, blend, order, texture formats) | Linux job (Xvfb) |
-| 4a | Scene to draw-call-count and vertex-bytes mapping | any |
-| 4b | Sample app renders N frames and dumps a PNG compared to a tolerant golden | Linux Xvfb; headless Chromium plus SwiftShader (web); Android emulator, nightly |
-| 4c | Counters in CI; timing on reference hardware | CI, plus release gate |
-| 5 | Game client, reference-device runs, human review | by hand |
+| component | `BatchBuilder`, draw-list translation, recording renderer | any |
+| integration | Real GL on llvmpipe: shader compile and link, FBO readback pixel probes (clip, blend, order, texture formats) | Linux job (Xvfb) |
+| deterministic | Scene to draw-call-count and vertex-bytes mapping | any |
+| e2e | Sample app renders N frames and dumps a PNG compared to a tolerant golden | Linux Xvfb; headless Chromium plus SwiftShader (web); Android emulator, nightly |
+| nonfunctional | Counters in CI; timing on reference hardware | CI, plus release gate |
+| uat | Game client, reference-device runs, human review | by hand |
 
 - Windows job: keep it as the full build and non-GL tests. Tag GL-opening tests so they do not run there. Do not install Mesa on Windows unless a need appears.
 - Prefer a few analytic probes ("pixel (x,y) equals C") over many goldens. Use pixel-aligned, nearest-filtered content so output is near-exact across rasterisers.
 - Compare with a per-channel tolerance plus a maximum differing-pixel fraction.
-- Generate goldens only on the CI rasteriser. Hardware correctness is Level 5.
+- Generate goldens only on the CI rasteriser. Hardware correctness belongs to uat.
 - The draft architecture's `graphics-test` module (recording renderer, scripted input, manual clock) tests the frame pipeline *above* the renderer. It does not verify the GL renderer. Software GL does that.
 
 ### Sample apps as tests
